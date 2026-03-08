@@ -334,10 +334,10 @@ public static class TryAssertions
 
         await Assert.That(result.IsFailure).IsTrue();
         await Assert.That(result.Failures.Count).IsEqualTo(1);
-        await Assert.That(result.Failures[0] is Failures.Exceptional).IsTrue();
+        var failure = result.Failures[0] as Failures.Exceptional;
 
-        var failure = (Failures.Exceptional)result.Failures[0];
-        await Assert.That(failure.Code).IsEqualTo("Exceptional");
+        await Assert.That(failure).IsNotNull();
+        await Assert.That(failure!.Code).IsEqualTo("Exceptional");
         await Assert.That(ReferenceEquals(failure.Exception, expectedException)).IsTrue();
     }
 }

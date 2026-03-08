@@ -270,16 +270,22 @@ public static class FailOrTryExtensions
         Func<Exception, FailOr<TResult>> onException
     )
     {
+        Task<TResult> resultTask;
+
         try
         {
-            var resultTask = mapAsync(value);
-            ArgumentNullException.ThrowIfNull(resultTask);
-
-            return FailOr.Success(await resultTask.ConfigureAwait(false));
+            resultTask = mapAsync(value);
         }
-        catch (ArgumentNullException exception) when (exception.ParamName == "resultTask")
+        catch (Exception exception)
         {
-            throw;
+            return onException(exception);
+        }
+
+        ArgumentNullException.ThrowIfNull(resultTask);
+
+        try
+        {
+            return FailOr.Success(await resultTask.ConfigureAwait(false));
         }
         catch (Exception exception)
         {
