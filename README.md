@@ -207,7 +207,7 @@ Examples of rejected release tags:
 Before the release workflow can publish to nuget.org, complete this setup:
 
 1. Create the GitHub repository.
-2. Replace every `TODO_OWNER/TODO_REPOSITORY` placeholder in project metadata and this README.
+2. Verify project metadata and repository links point to `oneirosoft/fail-or`.
 3. In nuget.org, configure a trusted publishing policy for this repository and the workflow file `release.yml`.
 4. Add a GitHub repository variable named `NUGET_ORG_USERNAME` with the nuget.org account or profile name that owns the package.
 5. Optionally configure a GitHub Actions environment if you want additional release approvals or environment-scoped controls.
@@ -227,11 +227,11 @@ The GitHub Release tag is the package version source of truth. The project file 
 
 ## Repository metadata
 
-Repository-specific links are intentionally left as placeholders until the GitHub repository exists:
+Repository metadata:
 
-- GitHub repository: `https://github.com/TODO_OWNER/TODO_REPOSITORY`
-- Issue tracker: `https://github.com/TODO_OWNER/TODO_REPOSITORY/issues`
-- Releases: `https://github.com/TODO_OWNER/TODO_REPOSITORY/releases`
+- GitHub repository: `https://github.com/oneirosoft/fail-or`
+- Issue tracker: `https://github.com/oneirosoft/fail-or/issues`
+- Releases: `https://github.com/oneirosoft/fail-or/releases`
 
 ## License
 

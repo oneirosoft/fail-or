@@ -11,8 +11,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/TODO_OWNER/TODO_REPOSITORY</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/TODO_OWNER/TODO_REPOSITORY</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/oneirosoft/fail-or</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/oneirosoft/fail-or</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
 
