@@ -146,7 +146,7 @@ if (result.IsFailure)
 }
 ```
 
-You can also translate the exception into a custom repo-native result:
+You can also translate the exception into a custom repository-native result:
 
 ```csharp
 using FailOr;
