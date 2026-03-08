@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  pack-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Check formatting
+        run: dotnet csharpier check .
+
+      - name: Resolve package version from release tag
+        id: version
+        shell: bash
+        run: |
+          tag='${{ github.event.release.tag_name }}'
+
+          if [[ ! "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?)$ ]]; then
+            echo "Release tag '$tag' is invalid. Expected v<NuGetSemVer>, for example v1.2.3 or v1.2.3-beta.1." >&2
+            exit 1
+          fi
+
+          version="${BASH_REMATCH[1]}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore fail-or.slnx
+
+      - name: Build
+        run: dotnet build fail-or.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --solution fail-or.slnx --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack src/FailOr/FailOr.csproj --configuration Release --no-build -p:Version=${{ steps.version.outputs.version }} --output artifacts/packages
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: artifacts/packages/*.nupkg
+
+      - name: Authenticate to nuget.org with trusted publishing
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_ORG_USERNAME }}
+
+      - name: Publish package to nuget.org
+        run: dotnet nuget push "artifacts/packages/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
