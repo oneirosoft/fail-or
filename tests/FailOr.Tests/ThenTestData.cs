@@ -19,6 +19,17 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenDo",
+                (source, counter) =>
+                    Task.FromResult(
+                        source.ThenDo(_ =>
+                        {
+                            counter.Increment();
+                        })
+                    )
+            );
+        yield return () =>
+            (
                 "ThenAsync map",
                 (source, counter) => source.ThenAsync(x => Task.FromResult(x + counter.Increment()))
             );
@@ -27,6 +38,16 @@ public static class ThenTestData
                 "ThenAsync bind",
                 (source, counter) =>
                     source.ThenAsync(x => Task.FromResult(FailOr.Success(x + counter.Increment())))
+            );
+        yield return () =>
+            (
+                "ThenDoAsync",
+                (source, counter) =>
+                    source.ThenDoAsync(_ =>
+                    {
+                        counter.Increment();
+                        return Task.CompletedTask;
+                    })
             );
     }
 
@@ -37,6 +58,7 @@ public static class ThenTestData
         yield return () => ("Then map", () => FailOr.Success(1).Then((Func<int, int>)null!), "map");
         yield return () =>
             ("Then bind", () => FailOr.Success(1).Then((Func<int, FailOr<int>>)null!), "bind");
+        yield return () => ("ThenDo", () => FailOr.Success(1).ThenDo((Action<int>)null!), "action");
         yield return () =>
             (
                 "ThenAsync map",
@@ -49,6 +71,20 @@ public static class ThenTestData
                 () => FailOr.Success(1).ThenAsync((Func<int, Task<FailOr<int>>>)null!),
                 "bindAsync"
             );
+        yield return () =>
+            (
+                "ThenDoAsync",
+                () => FailOr.Success(1).ThenDoAsync((Func<int, Task>)null!),
+                "actionAsync"
+            );
+    }
+
+    public static IEnumerable<
+        Func<(string Operation, Func<Task> Invoke, string ParameterName)>
+    > DirectNullTaskCases()
+    {
+        yield return () =>
+            ("ThenDoAsync", () => FailOr.Success(1).ThenDoAsync(_ => null!), "resultTask");
     }
 
     public static IEnumerable<
@@ -68,6 +104,15 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenDo",
+                (sourceTask, counter) =>
+                    sourceTask.ThenDo(_ =>
+                    {
+                        counter.Increment();
+                    })
+            );
+        yield return () =>
+            (
                 "ThenAsync map",
                 (sourceTask, counter) =>
                     sourceTask.ThenAsync(x => Task.FromResult(x + counter.Increment()))
@@ -79,6 +124,16 @@ public static class ThenTestData
                     sourceTask.ThenAsync(x =>
                         Task.FromResult(FailOr.Success(x + counter.Increment()))
                     )
+            );
+        yield return () =>
+            (
+                "ThenDoAsync",
+                (sourceTask, counter) =>
+                    sourceTask.ThenDoAsync(_ =>
+                    {
+                        counter.Increment();
+                        return Task.CompletedTask;
+                    })
             );
     }
 
@@ -100,6 +155,12 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenDo",
+                () => Task.FromResult(FailOr.Success(1)).ThenDo((Action<int>)null!),
+                "action"
+            );
+        yield return () =>
+            (
                 "ThenAsync map",
                 () => Task.FromResult(FailOr.Success(1)).ThenAsync((Func<int, Task<int>>)null!),
                 "mapAsync"
@@ -111,6 +172,38 @@ public static class ThenTestData
                     Task.FromResult(FailOr.Success(1))
                         .ThenAsync((Func<int, Task<FailOr<int>>>)null!),
                 "bindAsync"
+            );
+        yield return () =>
+            (
+                "ThenDoAsync",
+                () => Task.FromResult(FailOr.Success(1)).ThenDoAsync((Func<int, Task>)null!),
+                "actionAsync"
+            );
+    }
+
+    public static IEnumerable<
+        Func<(string Operation, Action Invoke, string ParameterName)>
+    > LiftedNullSourceCases()
+    {
+        yield return () =>
+            ("ThenDo", () => ((Task<FailOr<int>>)null!).ThenDo(_ => { }), "sourceTask");
+        yield return () =>
+            (
+                "ThenDoAsync",
+                () => ((Task<FailOr<int>>)null!).ThenDoAsync(_ => Task.CompletedTask),
+                "sourceTask"
+            );
+    }
+
+    public static IEnumerable<
+        Func<(string Operation, Func<Task> Invoke, string ParameterName)>
+    > LiftedNullTaskCases()
+    {
+        yield return () =>
+            (
+                "ThenDoAsync",
+                () => Task.FromResult(FailOr.Success(1)).ThenDoAsync(_ => null!),
+                "resultTask"
             );
     }
 
@@ -139,6 +232,13 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenDo",
+                source => Task.FromResult(source.ThenDo(_ => { })),
+                sourceTask => sourceTask.ThenDo(_ => { }),
+                1
+            );
+        yield return () =>
+            (
                 "ThenAsync map",
                 source => source.ThenAsync(x => Task.FromResult(x + 1)),
                 sourceTask => sourceTask.ThenAsync(x => Task.FromResult(x + 1)),
@@ -150,6 +250,13 @@ public static class ThenTestData
                 source => source.ThenAsync(x => Task.FromResult(FailOr.Success(x + 1))),
                 sourceTask => sourceTask.ThenAsync(x => Task.FromResult(FailOr.Success(x + 1))),
                 2
+            );
+        yield return () =>
+            (
+                "ThenDoAsync",
+                source => source.ThenDoAsync(_ => Task.CompletedTask),
+                sourceTask => sourceTask.ThenDoAsync(_ => Task.CompletedTask),
+                1
             );
     }
 
