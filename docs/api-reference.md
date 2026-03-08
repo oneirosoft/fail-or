@@ -302,6 +302,61 @@ var result = await FailOr.Success(10)
     .ThenAsync(async x => await GetAdjustedValueAsync(x));
 ```
 
+### Map a success value with exception handling
+
+```csharp
+public FailOr<TResult> Try<TResult>(Func<TSource, TResult> map)
+```
+
+Intent:
+Transform a success value while converting thrown exceptions to `Failure.Exceptional(...)`.
+
+Example:
+
+```csharp
+var result = FailOr.Success("42")
+    .Try(int.Parse);
+```
+
+### Map a success value with custom exception handling
+
+```csharp
+public FailOr<TResult> Try<TResult>(
+    Func<TSource, TResult> map,
+    Func<Exception, FailOr<TResult>> onException)
+```
+
+Intent:
+Transform a success value while projecting thrown exceptions into a custom `FailOr<TResult>`.
+
+Example:
+
+```csharp
+var result = FailOr.Success("42x")
+    .Try(
+        int.Parse,
+        exception => Failure.General($"Mapping failed: {exception.Message}"));
+```
+
+### Map asynchronously with exception handling
+
+```csharp
+public Task<FailOr<TResult>> TryAsync<TResult>(Func<TSource, Task<TResult>> mapAsync)
+public Task<FailOr<TResult>> TryAsync<TResult>(
+    Func<TSource, Task<TResult>> mapAsync,
+    Func<Exception, FailOr<TResult>> onException)
+```
+
+Intent:
+Transform a success value with an asynchronous operation while converting thrown exceptions to either `Failure.Exceptional(...)` or a custom projected result.
+
+Example:
+
+```csharp
+var result = await FailOr.Success("42")
+    .TryAsync(value => ParseNumberAsync(value));
+```
+
 ### Bind asynchronously
 
 ```csharp
@@ -592,7 +647,7 @@ var result = FailOr.Zip(
 
 ## Task-Wrapped Result Extensions
 
-The library also provides the same `Then`, `ThenAsync`, `ThenDo`, `ThenDoAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
+The library also provides the same `Then`, `ThenAsync`, `Try`, `TryAsync`, `ThenDo`, `ThenDoAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
 
 ```csharp
 Task<FailOr<T>>
@@ -643,6 +698,7 @@ The current API validates a few important invalid states:
 - `UnsafeUnwrap` throws `InvalidOperationException` when the result is failed.
 - Async delegate-based APIs throw `ArgumentNullException` when the delegate itself is `null`.
 - Async delegate-based APIs also throw `ArgumentNullException` when the selected delegate returns a `null` task.
+- `Try` and `TryAsync` convert exceptions thrown by mapping delegates into `Failure.Exceptional(...)` unless you provide a custom exception projection.
 
 ## Choosing The Right API
 

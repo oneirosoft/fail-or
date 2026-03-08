@@ -146,7 +146,7 @@ if (result.IsFailure)
 }
 ```
 
-You can also translate the exception into a custom repository-native result:
+You can also translate the exception into a custom repo-native result:
 
 ```csharp
 using FailOr;
@@ -188,7 +188,6 @@ var result = await FailOr.Success(10)
             : FailOr.Fail<bool>(Failure.General("Value must be even."));
     });
 ```
-
 ### Run success-side effects with `ThenDo`
 
 Use `ThenDo` when you want to observe a success without changing the flowing result.
