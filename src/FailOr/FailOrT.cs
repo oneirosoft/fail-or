@@ -6,21 +6,18 @@ namespace FailOr;
 public readonly record struct FailOr<T>
 {
     private readonly T _value;
-    private readonly Failure[] _failures;
-    private readonly IReadOnlyList<Failure> _failuresView;
+    private readonly Failures[] _failures;
 
     private FailOr(T value)
     {
         _value = value;
         _failures = [];
-        _failuresView = Array.AsReadOnly(_failures);
     }
 
-    private FailOr(Failure[] failures)
+    private FailOr(Failures[] failures)
     {
         _value = default!;
         _failures = failures;
-        _failuresView = Array.AsReadOnly(_failures);
     }
 
     /// <summary>
@@ -53,7 +50,7 @@ public readonly record struct FailOr<T>
     /// <summary>
     /// Gets the read-only collection of failures for a failed result.
     /// </summary>
-    public IReadOnlyList<Failure> Failures => _failuresView;
+    public IReadOnlyList<Failures> Failures => Array.AsReadOnly(_failures);
 
     /// <summary>
     /// Creates a successful result for <typeparamref name="T"/>.
@@ -79,16 +76,54 @@ public readonly record struct FailOr<T>
     }
 
     /// <summary>
+    /// Implicitly wraps a success value in a <see cref="FailOr{T}"/>.
+    /// </summary>
+    /// <param name="value">The success value to wrap.</param>
+    /// <returns>A successful result containing <paramref name="value"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="value"/> is <see langword="null"/> for a reference type.
+    /// </exception>
+    /// <example>
+    /// <code>
+    /// FailOr&lt;int&gt; result = 42;
+    /// </code>
+    /// </example>
+    public static implicit operator FailOr<T>(T value) => Success(value);
+
+    /// <summary>
     /// Creates a failed result from a single failure.
     /// </summary>
     /// <param name="failure">The failure to wrap.</param>
     /// <returns>A failed result containing <paramref name="failure"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="failure"/> is <see langword="null"/>.
+    /// </exception>
     /// <example>
     /// <code>
     /// var result = FailOr&lt;int&gt;.Fail(Failure.General("Invalid value"));
     /// </code>
     /// </example>
-    public static FailOr<T> Fail(Failure failure) => new([failure]);
+    public static FailOr<T> Fail(Failures failure)
+    {
+        ArgumentNullException.ThrowIfNull(failure);
+
+        return new([failure]);
+    }
+
+    /// <summary>
+    /// Implicitly wraps a single failure in a failed <see cref="FailOr{T}"/>.
+    /// </summary>
+    /// <param name="failure">The failure to wrap.</param>
+    /// <returns>A failed result containing <paramref name="failure"/>.</returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="failure"/> is <see langword="null"/>.
+    /// </exception>
+    /// <example>
+    /// <code>
+    /// FailOr&lt;int&gt; result = Failure.General("Invalid value");
+    /// </code>
+    /// </example>
+    public static implicit operator FailOr<T>(Failures failure) => Fail([failure]);
 
     /// <summary>
     /// Creates a failed result from a sequence of failures.
@@ -99,14 +134,14 @@ public readonly record struct FailOr<T>
     /// Thrown when <paramref name="failures"/> is <see langword="null"/>.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="failures"/> is empty.
+    /// Thrown when <paramref name="failures"/> is empty or contains a <see langword="null"/> value.
     /// </exception>
     /// <example>
     /// <code>
     /// var result = FailOr&lt;int&gt;.Fail([Failure.General("A"), Failure.General("B")]);
     /// </code>
     /// </example>
-    public static FailOr<T> Fail(IEnumerable<Failure> failures)
+    public static FailOr<T> Fail(IEnumerable<Failures> failures)
     {
         ArgumentNullException.ThrowIfNull(failures);
 
@@ -117,21 +152,68 @@ public readonly record struct FailOr<T>
             throw new ArgumentException("At least one failure must be provided.", nameof(failures));
         }
 
+        if (failuresArray.Any(static failure => failure is null))
+        {
+            throw new ArgumentException("Failures cannot contain null values.", nameof(failures));
+        }
+
         return new(failuresArray);
     }
+
+    /// <summary>
+    /// Implicitly wraps an array of failures in a failed <see cref="FailOr{T}"/>.
+    /// </summary>
+    /// <param name="failures">The failures to wrap.</param>
+    /// <returns>A failed result containing <paramref name="failures"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="failures"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="failures"/> is empty or contains a <see langword="null"/> value.
+    /// </exception>
+    /// <example>
+    /// <code>
+    /// Failures[] failures = [Failure.General("A"), Failure.General("B")];
+    /// FailOr&lt;int&gt; result = failures;
+    /// </code>
+    /// </example>
+    public static implicit operator FailOr<T>(Failures[] failures) => Fail(failures);
+
+    /// <summary>
+    /// Implicitly wraps a list of failures in a failed <see cref="FailOr{T}"/>.
+    /// </summary>
+    /// <param name="failures">The failures to wrap.</param>
+    /// <returns>A failed result containing <paramref name="failures"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="failures"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="failures"/> is empty or contains a <see langword="null"/> value.
+    /// </exception>
+    /// <example>
+    /// <code>
+    /// List&lt;Failures&gt; failures = [Failure.General("A"), Failure.General("B")];
+    /// FailOr&lt;int&gt; result = failures;
+    /// </code>
+    /// </example>
+    public static implicit operator FailOr<T>(List<Failures> failures) => Fail(failures);
 
     /// <summary>
     /// Creates a failed result from one or more failures.
     /// </summary>
     /// <param name="failures">The failures to wrap.</param>
     /// <returns>A failed result containing <paramref name="failures"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="failures"/> is <see langword="null"/>.
+    /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="failures"/> is empty.
+    /// Thrown when <paramref name="failures"/> is empty or contains a <see langword="null"/> value.
     /// </exception>
     /// <example>
     /// <code>
     /// var result = FailOr&lt;int&gt;.Fail(Failure.General("A"), Failure.General("B"));
     /// </code>
     /// </example>
-    public static FailOr<T> Fail(params Failure[] failures) => Fail((IEnumerable<Failure>)failures);
+    public static FailOr<T> Fail(params Failures[] failures) =>
+        Fail((IEnumerable<Failures>)failures);
 }

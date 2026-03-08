@@ -19,15 +19,35 @@ public readonly record struct FailOr<T>
 
 Use it when an operation should return a value on success without throwing exceptions for expected failure cases.
 
-### `Failure`
+### `Failures`
 
-Represents a single failure with a stable code and human-readable details.
+Represents the abstract failure union carried by failed results.
 
 ```csharp
-public readonly record struct Failure
+public abstract record Failures
 ```
 
-Use it when you want to describe why an operation failed in a machine-friendly and user-friendly way.
+Every failure exposes `Code` and `Details`. Concrete failures are:
+
+- `Failures.General`
+- `Failures.Validation`
+- `Failures.Exceptional`
+
+Additional case-specific members are:
+
+- `Failures.General.Metadata`
+- `Failures.Validation.PropertyName`
+- `Failures.Exceptional.Exception`
+
+### `Failure`
+
+Provides the public factory entrypoint for creating failure values.
+
+```csharp
+public static class Failure
+```
+
+Use it when you want to create a specific `Failures` case without calling constructors directly.
 
 ## Creating Results
 
@@ -36,6 +56,7 @@ Use it when you want to describe why an operation failed in a machine-friendly a
 ```csharp
 public static FailOr<T> Success<T>(T value)
 public static FailOr<T> FailOr<T>.Success(T value)
+public static implicit operator FailOr<T>(T value)
 ```
 
 Intent:
@@ -45,13 +66,15 @@ Example:
 
 ```csharp
 var result = FailOr.Success(42);
+FailOr<int> implicitResult = 42;
 ```
 
-### Create a failure from one `Failure`
+### Create a failure from one `Failures` value
 
 ```csharp
-public static FailOr<T> Fail<T>(Failure failure)
-public static FailOr<T> FailOr<T>.Fail(Failure failure)
+public static FailOr<T> Fail<T>(Failures failure)
+public static FailOr<T> FailOr<T>.Fail(Failures failure)
+public static implicit operator FailOr<T>(Failures failure)
 ```
 
 Intent:
@@ -61,15 +84,18 @@ Example:
 
 ```csharp
 var result = FailOr.Fail<int>(Failure.General("The input was invalid."));
+FailOr<int> implicitResult = Failure.General("The input was invalid.");
 ```
 
-### Create a failure from many `Failure` values
+### Create a failure from many `Failures` values
 
 ```csharp
-public static FailOr<T> Fail<T>(IEnumerable<Failure> failures)
-public static FailOr<T> Fail<T>(params Failure[] failures)
-public static FailOr<T> FailOr<T>.Fail(IEnumerable<Failure> failures)
-public static FailOr<T> FailOr<T>.Fail(params Failure[] failures)
+public static FailOr<T> Fail<T>(IEnumerable<Failures> failures)
+public static FailOr<T> Fail<T>(params Failures[] failures)
+public static FailOr<T> FailOr<T>.Fail(IEnumerable<Failures> failures)
+public static FailOr<T> FailOr<T>.Fail(params Failures[] failures)
+public static implicit operator FailOr<T>(Failures[] failures)
+public static implicit operator FailOr<T>(List<Failures> failures)
 ```
 
 Intent:
@@ -81,21 +107,71 @@ Example:
 var result = FailOr.Fail<int>(
     Failure.General("Email is required."),
     Failure.General("Password is required."));
+
+Failures[] failures =
+[
+    Failure.General("Email is required."),
+    Failure.General("Password is required.")
+];
+FailOr<int> implicitArrayResult = failures;
+
+var failureList = new List<Failures>
+{
+    Failure.General("Email is required."),
+    Failure.General("Password is required.")
+};
+FailOr<int> implicitListResult = failureList;
 ```
 
 ### Create a general-purpose failure
 
 ```csharp
-public static Failure General(string details)
+public static Failures.General General(
+    string details,
+    string? code = null,
+    Dictionary<string, object?>? metadata = null)
 ```
 
 Intent:
-Create a simple `Failure` with the code `"General"`.
+Create a `Failures.General` value with the default code `"General"` unless you supply a custom code.
 
 Example:
 
 ```csharp
 var failure = Failure.General("Something went wrong.");
+```
+
+### Create a validation failure
+
+```csharp
+public static Failures.Validation Validation(string propertyName, params string[] errors)
+```
+
+Intent:
+Create a property-scoped validation failure. The generated code is `Validation.{PropertyName}` and `Details` is the joined error message string.
+
+Example:
+
+```csharp
+var failure = Failure.Validation("Email", "Email is required.", "Email must contain '@'.");
+```
+
+### Create an exceptional failure
+
+```csharp
+public static Failures.Exceptional Exceptional(
+    Exception exception,
+    string? details = null,
+    string? code = null)
+```
+
+Intent:
+Create a failure that wraps an exception. The default code is `"Exceptional"` and the default details come from the exception message, or the exception type name when the message is blank.
+
+Example:
+
+```csharp
+var failure = Failure.Exceptional(new InvalidOperationException("Operation failed."));
 ```
 
 ## Inspecting Results
@@ -140,7 +216,7 @@ var value = result.UnsafeUnwrap();
 ### Read the failures
 
 ```csharp
-public IReadOnlyList<Failure> Failures { get; }
+public IReadOnlyList<Failures> Failures { get; }
 ```
 
 Intent:
@@ -262,7 +338,7 @@ var result = ReadFromPrimary()
 ### Create a fallback using the original failures
 
 ```csharp
-public FailOr<TSource> IfFailThen(Func<IReadOnlyList<Failure>, FailOr<TSource>> alternative)
+public FailOr<TSource> IfFailThen(Func<IReadOnlyList<Failures>, FailOr<TSource>> alternative)
 ```
 
 Intent:
@@ -280,7 +356,7 @@ var result = ReadFromPrimary()
 ```csharp
 public Task<FailOr<TSource>> IfFailThenAsync(Func<Task<FailOr<TSource>>> alternativeAsync)
 public Task<FailOr<TSource>> IfFailThenAsync(
-    Func<IReadOnlyList<Failure>, Task<FailOr<TSource>>> alternativeAsync)
+    Func<IReadOnlyList<Failures>, Task<FailOr<TSource>>> alternativeAsync)
 ```
 
 Intent:
@@ -295,7 +371,7 @@ Use `Match` when you want one expression that handles both success and failure.
 ```csharp
 public TResult Match<TResult>(
     Func<TSource, TResult> success,
-    Func<IReadOnlyList<Failure>, TResult> failure)
+    Func<IReadOnlyList<Failures>, TResult> failure)
 ```
 
 Intent:
@@ -314,15 +390,15 @@ var message = result.Match(
 ```csharp
 public Task<TResult> MatchAsync<TResult>(
     Func<TSource, Task<TResult>> successAsync,
-    Func<IReadOnlyList<Failure>, TResult> failure)
+    Func<IReadOnlyList<Failures>, TResult> failure)
 
 public Task<TResult> MatchAsync<TResult>(
     Func<TSource, TResult> success,
-    Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync)
+    Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync)
 
 public Task<TResult> MatchAsync<TResult>(
     Func<TSource, Task<TResult>> successAsync,
-    Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync)
+    Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync)
 ```
 
 Intent:
@@ -333,7 +409,7 @@ Use asynchronous projections on either or both branches.
 ```csharp
 public TResult MatchFirst<TResult>(
     Func<TSource, TResult> success,
-    Func<Failure, TResult> failure)
+    Func<Failures, TResult> failure)
 ```
 
 Intent:
@@ -352,15 +428,15 @@ var message = result.MatchFirst(
 ```csharp
 public Task<TResult> MatchFirstAsync<TResult>(
     Func<TSource, Task<TResult>> successAsync,
-    Func<Failure, TResult> failure)
+    Func<Failures, TResult> failure)
 
 public Task<TResult> MatchFirstAsync<TResult>(
     Func<TSource, TResult> success,
-    Func<Failure, Task<TResult>> failureAsync)
+    Func<Failures, Task<TResult>> failureAsync)
 
 public Task<TResult> MatchFirstAsync<TResult>(
     Func<TSource, Task<TResult>> successAsync,
-    Func<Failure, Task<TResult>> failureAsync)
+    Func<Failures, Task<TResult>> failureAsync)
 ```
 
 Intent:
@@ -467,9 +543,11 @@ var message = await GetUserAsync()
 The current API validates a few important invalid states:
 
 - `Success` throws `ArgumentNullException` for `null` reference-type values.
-- `Fail` throws `ArgumentNullException` when a failure sequence is `null`.
-- `Fail` throws `ArgumentException` when a failure sequence is empty.
-- `Failure.General` throws for `null`, empty, or whitespace details.
+- `Fail` throws `ArgumentNullException` for a `null` single failure or `null` failure sequence.
+- `Fail` throws `ArgumentException` when a failure sequence is empty or contains `null` values.
+- `Failure.General` throws for `null`, empty, or whitespace details, and for blank custom codes.
+- `Failure.Validation` throws for `null` or blank property names and for missing validation messages.
+- `Failure.Exceptional` throws for a `null` exception and for blank explicit details or blank custom codes.
 - `UnsafeUnwrap` throws `InvalidOperationException` when the result is failed.
 - Async delegate-based APIs throw `ArgumentNullException` when the delegate itself is `null`.
 - Async delegate-based APIs also throw `ArgumentNullException` when the selected delegate returns a `null` task.

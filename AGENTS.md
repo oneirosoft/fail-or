@@ -14,7 +14,8 @@
 ## Tools
 
 - Use the repository-local CSharpier tool via `dotnet csharpier`.
-- Restore local .NET tools with `dotnet tool restore` before running repository tooling.
+- Do not run `dotnet tool restore` proactively.
+- Run `dotnet tool restore` only when a required `dotnet` tool is not available and is needed for the task.
 
 ## Verification
 

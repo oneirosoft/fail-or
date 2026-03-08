@@ -2,10 +2,11 @@
 
 `FailOr` is a small .NET result-type library for representing success or one-or-more failures without relying on exceptions for normal control flow.
 
-It centers on two public types:
+It centers on three public entry points:
 
 - `FailOr<T>` for a successful value or a collection of failures
-- `Failure` for a machine-friendly code plus human-readable details
+- `Failures` for the abstract failure union carried by failed results
+- `Failure` for factory methods that create `Failures.General`, `Failures.Validation`, and `Failures.Exceptional`
 
 The library also includes convenience APIs for common result workflows:
 
@@ -32,12 +33,18 @@ dotnet add package FailOr
 `FailOr<T>` is either:
 
 - a success value of type `T`
-- a failure result containing one or more `Failure` values
+- a failure result containing one or more `Failures` values
 
-`Failure` currently exposes:
+`Failures` always exposes:
 
 - `Code`
 - `Details`
+
+Concrete failure values are created through the `Failure` factory surface:
+
+- `Failure.General(...)` for general-purpose failures with optional metadata
+- `Failure.Validation(...)` for property-scoped validation failures with one-or-more messages
+- `Failure.Exceptional(...)` for failures that wrap exceptions
 
 Use `IsSuccess`, `IsFailure`, `UnsafeUnwrap()`, and `Failures` to inspect a result directly when needed.
 
@@ -50,6 +57,19 @@ using FailOr;
 
 var success = FailOr.Success(42);
 var failure = FailOr.Fail<int>(Failure.General("Input was invalid."));
+FailOr<int> implicitSuccess = 42;
+FailOr<int> implicitSingleFailure = Failure.General("Input was invalid.");
+Failures[] implicitFailures =
+[
+    Failure.General("Primary problem"),
+    Failure.General("Secondary problem")
+];
+FailOr<int> implicitFailureArray = implicitFailures;
+FailOr<int> implicitFailureList = new List<Failures>
+{
+    Failure.General("First list problem"),
+    Failure.General("Second list problem")
+};
 
 if (success.IsSuccess)
 {
@@ -60,6 +80,26 @@ if (failure.IsFailure)
 {
     Console.WriteLine(failure.Failures[0].Details);
 }
+```
+
+The implicit conversions delegate to the same `Success(...)` and `Fail(...)` validation paths, so null reference successes and invalid failure collections still throw the same exceptions as the factory methods.
+
+### Create specific failure cases
+
+```csharp
+using FailOr;
+
+var general = Failure.General(
+    "Request timed out.",
+    code: "Http.Timeout",
+    metadata: new Dictionary<string, object?> { ["attempt"] = 3 });
+
+var validation = Failure.Validation(
+    "Email",
+    "Email is required.",
+    "Email must contain '@'.");
+
+var exceptional = Failure.Exceptional(new InvalidOperationException("Operation failed."));
 ```
 
 ### Chain success values with `Then`
@@ -130,7 +170,7 @@ var zipped = FailOr.Zip(
 var (number, text, flag) = zipped.UnsafeUnwrap();
 ```
 
-If any input fails, the returned result is failed and contains every failure from the failed inputs.
+If any input fails, the returned result is failed and contains every `Failures` value from the failed inputs, including mixed failure cases such as validation and exceptional failures.
 
 ### Prefer one result with `Combine`
 
