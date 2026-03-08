@@ -19,6 +19,12 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenEnsure",
+                (source, counter) =>
+                    Task.FromResult(source.ThenEnsure(x => FailOr.Success(x + counter.Increment())))
+            );
+        yield return () =>
+            (
                 "ThenDo",
                 (source, counter) =>
                     Task.FromResult(
@@ -41,6 +47,14 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenEnsureAsync",
+                (source, counter) =>
+                    source.ThenEnsureAsync(x =>
+                        Task.FromResult(FailOr.Success(x + counter.Increment()))
+                    )
+            );
+        yield return () =>
+            (
                 "ThenDoAsync",
                 (source, counter) =>
                     source.ThenDoAsync(_ =>
@@ -58,6 +72,12 @@ public static class ThenTestData
         yield return () => ("Then map", () => FailOr.Success(1).Then((Func<int, int>)null!), "map");
         yield return () =>
             ("Then bind", () => FailOr.Success(1).Then((Func<int, FailOr<int>>)null!), "bind");
+        yield return () =>
+            (
+                "ThenEnsure",
+                () => FailOr.Success(1).ThenEnsure((Func<int, FailOr<int>>)null!),
+                "ensure"
+            );
         yield return () => ("ThenDo", () => FailOr.Success(1).ThenDo((Action<int>)null!), "action");
         yield return () =>
             (
@@ -73,6 +93,12 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenEnsureAsync",
+                () => FailOr.Success(1).ThenEnsureAsync((Func<int, Task<FailOr<int>>>)null!),
+                "ensureAsync"
+            );
+        yield return () =>
+            (
                 "ThenDoAsync",
                 () => FailOr.Success(1).ThenDoAsync((Func<int, Task>)null!),
                 "actionAsync"
@@ -85,6 +111,12 @@ public static class ThenTestData
     {
         yield return () =>
             ("ThenDoAsync", () => FailOr.Success(1).ThenDoAsync(_ => null!), "resultTask");
+        yield return () =>
+            (
+                "ThenEnsureAsync",
+                () => FailOr.Success(1).ThenEnsureAsync((Func<int, Task<FailOr<int>>>)(_ => null!)),
+                "resultTask"
+            );
     }
 
     public static IEnumerable<
@@ -101,6 +133,12 @@ public static class ThenTestData
                 "Then bind",
                 (sourceTask, counter) =>
                     sourceTask.Then(x => FailOr.Success(x + counter.Increment()))
+            );
+        yield return () =>
+            (
+                "ThenEnsure",
+                (sourceTask, counter) =>
+                    sourceTask.ThenEnsure(x => FailOr.Success(x + counter.Increment()))
             );
         yield return () =>
             (
@@ -122,6 +160,14 @@ public static class ThenTestData
                 "ThenAsync bind",
                 (sourceTask, counter) =>
                     sourceTask.ThenAsync(x =>
+                        Task.FromResult(FailOr.Success(x + counter.Increment()))
+                    )
+            );
+        yield return () =>
+            (
+                "ThenEnsureAsync",
+                (sourceTask, counter) =>
+                    sourceTask.ThenEnsureAsync(x =>
                         Task.FromResult(FailOr.Success(x + counter.Increment()))
                     )
             );
@@ -155,6 +201,12 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenEnsure",
+                () => Task.FromResult(FailOr.Success(1)).ThenEnsure((Func<int, FailOr<int>>)null!),
+                "ensure"
+            );
+        yield return () =>
+            (
                 "ThenDo",
                 () => Task.FromResult(FailOr.Success(1)).ThenDo((Action<int>)null!),
                 "action"
@@ -175,6 +227,14 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenEnsureAsync",
+                () =>
+                    Task.FromResult(FailOr.Success(1))
+                        .ThenEnsureAsync((Func<int, Task<FailOr<int>>>)null!),
+                "ensureAsync"
+            );
+        yield return () =>
+            (
                 "ThenDoAsync",
                 () => Task.FromResult(FailOr.Success(1)).ThenDoAsync((Func<int, Task>)null!),
                 "actionAsync"
@@ -189,8 +249,23 @@ public static class ThenTestData
             ("ThenDo", () => ((Task<FailOr<int>>)null!).ThenDo(_ => { }), "sourceTask");
         yield return () =>
             (
+                "ThenEnsure",
+                () => ((Task<FailOr<int>>)null!).ThenEnsure(_ => FailOr.Success(1)),
+                "sourceTask"
+            );
+        yield return () =>
+            (
                 "ThenDoAsync",
                 () => ((Task<FailOr<int>>)null!).ThenDoAsync(_ => Task.CompletedTask),
+                "sourceTask"
+            );
+        yield return () =>
+            (
+                "ThenEnsureAsync",
+                () =>
+                    ((Task<FailOr<int>>)null!).ThenEnsureAsync(_ =>
+                        Task.FromResult(FailOr.Success(1))
+                    ),
                 "sourceTask"
             );
     }
@@ -203,6 +278,14 @@ public static class ThenTestData
             (
                 "ThenDoAsync",
                 () => Task.FromResult(FailOr.Success(1)).ThenDoAsync(_ => null!),
+                "resultTask"
+            );
+        yield return () =>
+            (
+                "ThenEnsureAsync",
+                () =>
+                    Task.FromResult(FailOr.Success(1))
+                        .ThenEnsureAsync((Func<int, Task<FailOr<int>>>)(_ => null!)),
                 "resultTask"
             );
     }
@@ -232,6 +315,13 @@ public static class ThenTestData
             );
         yield return () =>
             (
+                "ThenEnsure",
+                source => Task.FromResult(source.ThenEnsure(x => FailOr.Success(x + 1))),
+                sourceTask => sourceTask.ThenEnsure(x => FailOr.Success(x + 1)),
+                1
+            );
+        yield return () =>
+            (
                 "ThenDo",
                 source => Task.FromResult(source.ThenDo(_ => { })),
                 sourceTask => sourceTask.ThenDo(_ => { }),
@@ -250,6 +340,14 @@ public static class ThenTestData
                 source => source.ThenAsync(x => Task.FromResult(FailOr.Success(x + 1))),
                 sourceTask => sourceTask.ThenAsync(x => Task.FromResult(FailOr.Success(x + 1))),
                 2
+            );
+        yield return () =>
+            (
+                "ThenEnsureAsync",
+                source => source.ThenEnsureAsync(x => Task.FromResult(FailOr.Success(x + 1))),
+                sourceTask =>
+                    sourceTask.ThenEnsureAsync(x => Task.FromResult(FailOr.Success(x + 1))),
+                1
             );
         yield return () =>
             (
