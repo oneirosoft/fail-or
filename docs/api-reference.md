@@ -299,6 +299,38 @@ var result = await FailOr.Success("42")
     .ThenAsync(ParseNumberAsync);
 ```
 
+### Run a side effect and preserve the success
+
+```csharp
+public FailOr<TSource> ThenDo(Action<TSource> action)
+```
+
+Intent:
+Run a side effect such as logging, metrics, or caching without changing the success value.
+
+Example:
+
+```csharp
+var result = FailOr.Success(10)
+    .ThenDo(x => Console.WriteLine($"Observed {x}"));
+```
+
+### Run a side effect asynchronously and preserve the success
+
+```csharp
+public Task<FailOr<TSource>> ThenDoAsync(Func<TSource, Task> actionAsync)
+```
+
+Intent:
+Run an asynchronous side effect without changing the success value.
+
+Example:
+
+```csharp
+var result = await FailOr.Success(10)
+    .ThenDoAsync(async x => await AuditAsync(x));
+```
+
 ## Recovering From Failures
 
 These APIs preserve an existing success. They only apply the fallback when the source is failed.
@@ -519,7 +551,7 @@ var result = FailOr.Zip(
 
 ## Task-Wrapped Result Extensions
 
-The library also provides the same `Then`, `ThenAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
+The library also provides the same `Then`, `ThenAsync`, `ThenDo`, `ThenDoAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
 
 ```csharp
 Task<FailOr<T>>
@@ -536,6 +568,25 @@ var message = await GetUserAsync()
     .Match(
         success: email => $"Email: {email}",
         failure: failures => failures[0].Details);
+```
+
+### Preserve a task-wrapped success while running side effects
+
+```csharp
+public Task<FailOr<TSource>> ThenDo(Action<TSource> action)
+public Task<FailOr<TSource>> ThenDoAsync(Func<TSource, Task> actionAsync)
+```
+
+Intent:
+Observe or audit the successful value from a `Task<FailOr<T>>` without changing the flowing result.
+
+Example:
+
+```csharp
+var result = await GetUserAsync()
+    .ThenDo(user => Console.WriteLine(user.Email))
+    .ThenDoAsync(user => AuditAsync(user))
+    .Then(user => user.Email);
 ```
 
 ## Validation Rules And Exceptions
@@ -556,6 +607,7 @@ The current API validates a few important invalid states:
 
 - Use `Success` and `Fail` to create results.
 - Use `Then` and `ThenAsync` to continue only on success.
+- Use `ThenDo` and `ThenDoAsync` to run side effects while preserving the success value.
 - Use `IfFailThen` and `IfFailThenAsync` to recover from failures.
 - Use `Match` when you want a final value from both branches.
 - Use `MatchFirst` when only the first failure matters.

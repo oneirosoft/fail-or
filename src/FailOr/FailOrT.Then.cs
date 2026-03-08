@@ -104,6 +104,58 @@ public static class FailOrThenExtensions
         }
 
         /// <summary>
+        /// Runs a side effect for a successful value while preserving the original result.
+        /// </summary>
+        /// <param name="action">The side effect to run when the source is successful.</param>
+        /// <returns>
+        /// The original success unchanged, or the original failures when the source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="action"/> is <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = result.ThenDo(x => Console.WriteLine(x));
+        /// </code>
+        /// </example>
+        public FailOr<TSource> ThenDo(Action<TSource> action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+
+            if (source.IsFailure)
+            {
+                return source;
+            }
+
+            action(source.UnsafeUnwrap());
+            return source;
+        }
+
+        /// <summary>
+        /// Asynchronously runs a side effect for a successful value while preserving the original result.
+        /// </summary>
+        /// <param name="actionAsync">The asynchronous side effect to run when the source is successful.</param>
+        /// <returns>
+        /// A task producing the original success unchanged, or the original failures when the source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="actionAsync"/> is <see langword="null"/> or returns <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = await result.ThenDoAsync(x => WriteAsync(x));
+        /// </code>
+        /// </example>
+        public Task<FailOr<TSource>> ThenDoAsync(Func<TSource, Task> actionAsync)
+        {
+            ArgumentNullException.ThrowIfNull(actionAsync);
+
+            return source.IsFailure
+                ? Task.FromResult(source)
+                : ThenDoAsyncCore(source.UnsafeUnwrap(), actionAsync);
+        }
+
+        /// <summary>
         /// Returns the current success unchanged, or the provided alternative result when the source is failed.
         /// </summary>
         /// <param name="alternative">The fallback result to use when the source is failed.</param>
@@ -312,6 +364,53 @@ public static class FailOrThenExtensions
         }
 
         /// <summary>
+        /// Runs a side effect for the successful value of a task-wrapped result while preserving the original result.
+        /// </summary>
+        /// <param name="action">The side effect to run when the awaited source is successful.</param>
+        /// <returns>
+        /// A task producing the original success unchanged, or the original failures when the awaited source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the awaited source task or <paramref name="action"/> is <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = await resultTask.ThenDo(x => Console.WriteLine(x));
+        /// </code>
+        /// </example>
+        public Task<FailOr<TSource>> ThenDo(Action<TSource> action)
+        {
+            ArgumentNullException.ThrowIfNull(sourceTask);
+            ArgumentNullException.ThrowIfNull(action);
+
+            return ThenCore(sourceTask, source => Task.FromResult(source.ThenDo(action)));
+        }
+
+        /// <summary>
+        /// Asynchronously runs a side effect for the successful value of a task-wrapped result while preserving the original result.
+        /// </summary>
+        /// <param name="actionAsync">The asynchronous side effect to run when the awaited source is successful.</param>
+        /// <returns>
+        /// A task producing the original success unchanged, or the original failures when the awaited source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the awaited source task or <paramref name="actionAsync"/> is <see langword="null"/>,
+        /// or when <paramref name="actionAsync"/> returns <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = await resultTask.ThenDoAsync(x => WriteAsync(x));
+        /// </code>
+        /// </example>
+        public Task<FailOr<TSource>> ThenDoAsync(Func<TSource, Task> actionAsync)
+        {
+            ArgumentNullException.ThrowIfNull(sourceTask);
+            ArgumentNullException.ThrowIfNull(actionAsync);
+
+            return ThenCore(sourceTask, source => source.ThenDoAsync(actionAsync));
+        }
+
+        /// <summary>
         /// Returns the awaited success unchanged, or the provided alternative result when the awaited source is failed.
         /// </summary>
         /// <param name="alternative">The fallback result to use when the awaited source is failed.</param>
@@ -453,6 +552,18 @@ public static class FailOrThenExtensions
         ArgumentNullException.ThrowIfNull(resultTask);
 
         return await resultTask.ConfigureAwait(false);
+    }
+
+    private static async Task<FailOr<TSource>> ThenDoAsyncCore<TSource>(
+        TSource value,
+        Func<TSource, Task> actionAsync
+    )
+    {
+        var resultTask = actionAsync(value);
+        ArgumentNullException.ThrowIfNull(resultTask);
+
+        await resultTask.ConfigureAwait(false);
+        return FailOr.Success(value);
     }
 
     private static async Task<FailOr<TSource>> IfFailThenAsyncCore<TSource>(

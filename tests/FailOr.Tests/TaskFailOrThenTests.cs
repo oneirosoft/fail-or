@@ -49,6 +49,51 @@ public class TaskFailOrThenTests
     }
 
     [Test]
+    [Arguments(1)]
+    [Arguments(5)]
+    public async Task ThenDo_preserves_successful_task_values(int value)
+    {
+        var source = FailOr.Success(value);
+        var calls = 0;
+        var observed = 0;
+
+        var result = await Task.FromResult(source)
+            .ThenDo(x =>
+            {
+                observed = x;
+                calls++;
+            });
+
+        using var _ = Assert.Multiple();
+        await Assert.That(calls).IsEqualTo(1);
+        await Assert.That(observed).IsEqualTo(value);
+        await ThenAssertions.AssertEquivalent(result, source);
+    }
+
+    [Test]
+    [Arguments(1)]
+    [Arguments(5)]
+    public async Task ThenDoAsync_preserves_successful_task_values(int value)
+    {
+        var source = FailOr.Success(value);
+        var calls = 0;
+        var observed = 0;
+
+        var result = await Task.FromResult(source)
+            .ThenDoAsync(x =>
+            {
+                observed = x;
+                calls++;
+                return Task.CompletedTask;
+            });
+
+        using var _ = Assert.Multiple();
+        await Assert.That(calls).IsEqualTo(1);
+        await Assert.That(observed).IsEqualTo(value);
+        await ThenAssertions.AssertEquivalent(result, source);
+    }
+
+    [Test]
     [MethodDataSource(typeof(ThenTestData), nameof(ThenTestData.LiftedFailureShortCircuitCases))]
     public async Task Failed_sources_short_circuit_all_lifted_overloads(
         string operation,
@@ -75,6 +120,65 @@ public class TaskFailOrThenTests
     )
     {
         await Assert.That(invoke).Throws<ArgumentNullException>().WithParameterName(parameterName);
+    }
+
+    [Test]
+    [MethodDataSource(typeof(ThenTestData), nameof(ThenTestData.LiftedNullSourceCases))]
+    public async Task Null_source_tasks_throw_for_lifted_ThenDo_overloads(
+        string operation,
+        Action invoke,
+        string parameterName
+    )
+    {
+        await Assert.That(invoke).Throws<ArgumentNullException>().WithParameterName(parameterName);
+    }
+
+    [Test]
+    [MethodDataSource(typeof(ThenTestData), nameof(ThenTestData.LiftedNullTaskCases))]
+    public async Task Null_tasks_throw_for_lifted_async_ThenDo_overloads(
+        string operation,
+        Func<Task> invoke,
+        string parameterName
+    )
+    {
+        await Assert.That(invoke).Throws<ArgumentNullException>().WithParameterName(parameterName);
+    }
+
+    [Test]
+    public async Task ThenDo_propagates_delegate_exceptions_for_task_wrapped_sources()
+    {
+        var expected = new InvalidOperationException("ThenDo task failed");
+
+        try
+        {
+            _ = await Task.FromResult(FailOr.Success(1))
+                .ThenDo(_ =>
+                {
+                    throw expected;
+                });
+            throw new Exception("Expected ThenDo to rethrow the original exception.");
+        }
+        catch (InvalidOperationException actual)
+        {
+            await Assert.That(ReferenceEquals(actual, expected)).IsTrue();
+        }
+    }
+
+    [Test]
+    public async Task ThenDoAsync_propagates_delegate_exceptions_for_task_wrapped_sources()
+    {
+        var expected = new InvalidOperationException("ThenDoAsync task failed");
+
+        try
+        {
+            _ = await Task.FromResult(FailOr.Success(1))
+                .ThenDoAsync(_ => Task.FromException(expected));
+            throw new Exception("Expected ThenDoAsync to rethrow the original exception.");
+        }
+        catch (InvalidOperationException actual)
+        {
+            await Assert.That(ReferenceEquals(actual, expected)).IsTrue();
+        }
     }
 
     [Test]

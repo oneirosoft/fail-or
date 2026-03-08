@@ -11,7 +11,7 @@ It centers on three public entry points:
 The library also includes convenience APIs for common result workflows:
 
 - `FailOr.Success(...)` and `FailOr.Fail(...)` for construction
-- `Then(...)` and `ThenAsync(...)` for chaining
+- `Then(...)`, `ThenAsync(...)`, `ThenDo(...)`, and `ThenDoAsync(...)` for chaining and success-side effects
 - `Match(...)` and `MatchFirst(...)` for branching
 - `Zip(...)` for aggregating multiple results
 - `Combine(...)` for choosing a preferred success with fallback
@@ -127,6 +127,34 @@ var result = await FailOr.Success(10)
         await Task.Delay(10);
         return value + 5;
     });
+```
+
+### Run success-side effects with `ThenDo`
+
+Use `ThenDo` when you want to observe a success without changing the flowing result.
+
+```csharp
+using FailOr;
+
+var result = FailOr.Success(10)
+    .ThenDo(value => Console.WriteLine($"Observed: {value}"))
+    .Then(value => value + 5);
+
+var finalValue = result.UnsafeUnwrap(); // 15
+```
+
+The same side-effect helpers are available for task-wrapped results:
+
+```csharp
+using FailOr;
+
+var result = await Task.FromResult(FailOr.Success(10))
+    .ThenDoAsync(async value =>
+    {
+        await Task.Delay(10);
+        Console.WriteLine($"Observed: {value}");
+    })
+    .Then(value => value + 5);
 ```
 
 ### Branch with `Match`
