@@ -129,6 +129,34 @@ var result = await FailOr.Success(10)
     });
 ```
 
+### Map safely with `Try`
+
+Use `Try` when the next step should only run after success, but thrown exceptions should become failures instead of escaping the pipeline.
+
+```csharp
+using FailOr;
+
+var result = FailOr.Success("42")
+    .Try(value => int.Parse(value));
+
+if (result.IsFailure)
+{
+    var failure = (Failures.Exceptional)result.Failures[0];
+    Console.WriteLine(failure.Exception.Message);
+}
+```
+
+You can also translate the exception into a custom repo-native result:
+
+```csharp
+using FailOr;
+
+var result = FailOr.Success("42x")
+    .Try(
+        value => int.Parse(value),
+        exception => Failure.General($"Mapping failed: {exception.Message}"));
+```
+
 ### Run success-side effects with `ThenDo`
 
 Use `ThenDo` when you want to observe a success without changing the flowing result.
