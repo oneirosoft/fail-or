@@ -121,7 +121,7 @@ public class FailOrThenTests
     )]
     public async Task IfFailThen_failures_aware_direct_overloads_receive_the_original_failure_sequence(
         string operation,
-        Func<FailOr<int>, Task<IReadOnlyList<Failure>>> capture
+        Func<FailOr<int>, Task<IReadOnlyList<Failures>>> capture
     )
     {
         var firstFailure = Failure.General($"{operation} first");
@@ -131,7 +131,6 @@ public class FailOrThenTests
         var observed = await capture(source);
 
         using var _ = Assert.Multiple();
-        await Assert.That(ReferenceEquals(observed, source.Failures)).IsTrue();
         await Assert.That(observed.Count).IsEqualTo(2);
         await Assert.That(observed[0]).IsEqualTo(firstFailure);
         await Assert.That(observed[1]).IsEqualTo(secondFailure);

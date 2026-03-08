@@ -25,12 +25,15 @@ public static partial class FailOr
     /// </summary>
     /// <param name="failure">The failure to wrap.</param>
     /// <returns>A failed result containing <paramref name="failure"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="failure"/> is <see langword="null"/>.
+    /// </exception>
     /// <example>
     /// <code>
     /// var result = FailOr.Fail&lt;int&gt;(Failure.General("Invalid value"));
     /// </code>
     /// </example>
-    public static FailOr<T> Fail<T>(Failure failure) => FailOr<T>.Fail(failure);
+    public static FailOr<T> Fail<T>(Failures failure) => FailOr<T>.Fail(failure);
 
     /// <summary>
     /// Creates a failed <see cref="FailOr{T}"/> result from a sequence of failures.
@@ -41,27 +44,30 @@ public static partial class FailOr
     /// Thrown when <paramref name="failures"/> is <see langword="null"/>.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="failures"/> is empty.
+    /// Thrown when <paramref name="failures"/> is empty or contains a <see langword="null"/> value.
     /// </exception>
     /// <example>
     /// <code>
     /// var result = FailOr.Fail&lt;int&gt;([Failure.General("A"), Failure.General("B")]);
     /// </code>
     /// </example>
-    public static FailOr<T> Fail<T>(IEnumerable<Failure> failures) => FailOr<T>.Fail(failures);
+    public static FailOr<T> Fail<T>(IEnumerable<Failures> failures) => FailOr<T>.Fail(failures);
 
     /// <summary>
     /// Creates a failed <see cref="FailOr{T}"/> result from one or more failures.
     /// </summary>
     /// <param name="failures">The failures to wrap.</param>
     /// <returns>A failed result containing <paramref name="failures"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="failures"/> is <see langword="null"/>.
+    /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="failures"/> is empty.
+    /// Thrown when <paramref name="failures"/> is empty or contains a <see langword="null"/> value.
     /// </exception>
     /// <example>
     /// <code>
     /// var result = FailOr.Fail&lt;int&gt;(Failure.General("A"), Failure.General("B"));
     /// </code>
     /// </example>
-    public static FailOr<T> Fail<T>(params Failure[] failures) => FailOr<T>.Fail(failures);
+    public static FailOr<T> Fail<T>(params Failures[] failures) => FailOr<T>.Fail(failures);
 }

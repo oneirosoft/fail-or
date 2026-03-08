@@ -365,7 +365,7 @@ public static class MatchTestData
         yield return () =>
             (
                 "Match failure",
-                () => FailOr.Success(1).Match(_ => 0, (Func<IReadOnlyList<Failure>, int>)null!),
+                () => FailOr.Success(1).Match(_ => 0, (Func<IReadOnlyList<Failures>, int>)null!),
                 "failure"
             );
         yield return () =>
@@ -382,7 +382,7 @@ public static class MatchTestData
                         .Success(1)
                         .MatchAsync(
                             _ => Task.FromResult(0),
-                            (Func<IReadOnlyList<Failure>, int>)null!
+                            (Func<IReadOnlyList<Failures>, int>)null!
                         ),
                 "failure"
             );
@@ -398,7 +398,7 @@ public static class MatchTestData
                 () =>
                     FailOr
                         .Success(1)
-                        .MatchAsync(_ => 0, (Func<IReadOnlyList<Failure>, Task<int>>)null!),
+                        .MatchAsync(_ => 0, (Func<IReadOnlyList<Failures>, Task<int>>)null!),
                 "failureAsync"
             );
         yield return () =>
@@ -418,7 +418,7 @@ public static class MatchTestData
                         .Success(1)
                         .MatchAsync(
                             _ => Task.FromResult(0),
-                            (Func<IReadOnlyList<Failure>, Task<int>>)null!
+                            (Func<IReadOnlyList<Failures>, Task<int>>)null!
                         ),
                 "failureAsync"
             );
@@ -431,7 +431,7 @@ public static class MatchTestData
         yield return () =>
             (
                 "MatchFirst failure",
-                () => FailOr.Success(1).MatchFirst(_ => 0, (Func<Failure, int>)null!),
+                () => FailOr.Success(1).MatchFirst(_ => 0, (Func<Failures, int>)null!),
                 "failure"
             );
         yield return () =>
@@ -446,7 +446,7 @@ public static class MatchTestData
                 () =>
                     FailOr
                         .Success(1)
-                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failure, int>)null!),
+                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failures, int>)null!),
                 "failure"
             );
         yield return () =>
@@ -461,7 +461,7 @@ public static class MatchTestData
         yield return () =>
             (
                 "MatchFirstAsync failure async",
-                () => FailOr.Success(1).MatchFirstAsync(_ => 0, (Func<Failure, Task<int>>)null!),
+                () => FailOr.Success(1).MatchFirstAsync(_ => 0, (Func<Failures, Task<int>>)null!),
                 "failureAsync"
             );
         yield return () =>
@@ -479,7 +479,7 @@ public static class MatchTestData
                 () =>
                     FailOr
                         .Success(1)
-                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failure, Task<int>>)null!),
+                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failures, Task<int>>)null!),
                 "failureAsync"
             );
     }
@@ -720,7 +720,7 @@ public static class MatchTestData
                 "Match failure",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .Match(_ => 0, (Func<IReadOnlyList<Failure>, int>)null!),
+                        .Match(_ => 0, (Func<IReadOnlyList<Failures>, int>)null!),
                 "failure"
             );
         yield return () =>
@@ -744,7 +744,7 @@ public static class MatchTestData
                     Task.FromResult(FailOr.Success(1))
                         .MatchAsync(
                             _ => Task.FromResult(0),
-                            (Func<IReadOnlyList<Failure>, int>)null!
+                            (Func<IReadOnlyList<Failures>, int>)null!
                         ),
                 "failure"
             );
@@ -767,7 +767,7 @@ public static class MatchTestData
                 "MatchAsync failure async",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .MatchAsync(_ => 0, (Func<IReadOnlyList<Failure>, Task<int>>)null!),
+                        .MatchAsync(_ => 0, (Func<IReadOnlyList<Failures>, Task<int>>)null!),
                 "failureAsync"
             );
         yield return () =>
@@ -795,7 +795,7 @@ public static class MatchTestData
                     Task.FromResult(FailOr.Success(1))
                         .MatchAsync(
                             _ => Task.FromResult(0),
-                            (Func<IReadOnlyList<Failure>, Task<int>>)null!
+                            (Func<IReadOnlyList<Failures>, Task<int>>)null!
                         ),
                 "failureAsync"
             );
@@ -816,7 +816,7 @@ public static class MatchTestData
                 "MatchFirst failure",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .MatchFirst(_ => 0, (Func<Failure, int>)null!),
+                        .MatchFirst(_ => 0, (Func<Failures, int>)null!),
                 "failure"
             );
         yield return () =>
@@ -838,7 +838,7 @@ public static class MatchTestData
                 "MatchFirstAsync failure",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failure, int>)null!),
+                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failures, int>)null!),
                 "failure"
             );
         yield return () =>
@@ -860,7 +860,7 @@ public static class MatchTestData
                 "MatchFirstAsync failure async",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .MatchFirstAsync(_ => 0, (Func<Failure, Task<int>>)null!),
+                        .MatchFirstAsync(_ => 0, (Func<Failures, Task<int>>)null!),
                 "failureAsync"
             );
         yield return () =>
@@ -886,7 +886,7 @@ public static class MatchTestData
                 "MatchFirstAsync both async failure",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failure, Task<int>>)null!),
+                        .MatchFirstAsync(_ => Task.FromResult(0), (Func<Failures, Task<int>>)null!),
                 "failureAsync"
             );
     }
@@ -1242,18 +1242,18 @@ public sealed class MatchBranchTracker
 {
     public int SuccessCalls { get; private set; }
     public int FailureCalls { get; private set; }
-    public IReadOnlyList<Failure>? CapturedFailures { get; private set; }
-    public Failure? CapturedFailure { get; private set; }
+    public IReadOnlyList<Failures>? CapturedFailures { get; private set; }
+    public Failures? CapturedFailure { get; private set; }
 
     public void CaptureSuccess() => SuccessCalls++;
 
-    public void CaptureFailures(IReadOnlyList<Failure> failures)
+    public void CaptureFailures(IReadOnlyList<Failures> failures)
     {
         FailureCalls++;
         CapturedFailures = failures;
     }
 
-    public void CaptureFailure(Failure failure)
+    public void CaptureFailure(Failures failure)
     {
         FailureCalls++;
         CapturedFailure = failure;
@@ -1274,7 +1274,7 @@ public static class MatchAssertions
 
     public static async Task AssertFailureListBranch(
         MatchBranchTracker tracker,
-        params Failure[] expected
+        params Failures[] expected
     )
     {
         using var _ = Assert.Multiple();
@@ -1291,7 +1291,7 @@ public static class MatchAssertions
         }
     }
 
-    public static async Task AssertFailureFirstBranch(MatchBranchTracker tracker, Failure expected)
+    public static async Task AssertFailureFirstBranch(MatchBranchTracker tracker, Failures expected)
     {
         using var _ = Assert.Multiple();
 

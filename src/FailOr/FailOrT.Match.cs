@@ -25,7 +25,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public TResult Match<TResult>(
             Func<TSource, TResult> success,
-            Func<IReadOnlyList<Failure>, TResult> failure
+            Func<IReadOnlyList<Failures>, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(success);
@@ -53,7 +53,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<IReadOnlyList<Failure>, TResult> failure
+            Func<IReadOnlyList<Failures>, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(successAsync);
@@ -83,7 +83,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchAsync<TResult>(
             Func<TSource, TResult> success,
-            Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync
+            Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(success);
@@ -113,7 +113,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync
+            Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(successAsync);
@@ -142,7 +142,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public TResult MatchFirst<TResult>(
             Func<TSource, TResult> success,
-            Func<Failure, TResult> failure
+            Func<Failures, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(success);
@@ -170,7 +170,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirstAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<Failure, TResult> failure
+            Func<Failures, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(successAsync);
@@ -200,7 +200,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirstAsync<TResult>(
             Func<TSource, TResult> success,
-            Func<Failure, Task<TResult>> failureAsync
+            Func<Failures, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(success);
@@ -230,7 +230,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirstAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<Failure, Task<TResult>> failureAsync
+            Func<Failures, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(successAsync);
@@ -262,7 +262,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> Match<TResult>(
             Func<TSource, TResult> success,
-            Func<IReadOnlyList<Failure>, TResult> failure
+            Func<IReadOnlyList<Failures>, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -291,7 +291,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<IReadOnlyList<Failure>, TResult> failure
+            Func<IReadOnlyList<Failures>, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -320,7 +320,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchAsync<TResult>(
             Func<TSource, TResult> success,
-            Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync
+            Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -349,7 +349,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync
+            Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -377,7 +377,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirst<TResult>(
             Func<TSource, TResult> success,
-            Func<Failure, TResult> failure
+            Func<Failures, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -409,7 +409,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirstAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<Failure, TResult> failure
+            Func<Failures, TResult> failure
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -438,7 +438,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirstAsync<TResult>(
             Func<TSource, TResult> success,
-            Func<Failure, Task<TResult>> failureAsync
+            Func<Failures, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -467,7 +467,7 @@ public static class FailOrMatchExtensions
         /// </example>
         public Task<TResult> MatchFirstAsync<TResult>(
             Func<TSource, Task<TResult>> successAsync,
-            Func<Failure, Task<TResult>> failureAsync
+            Func<Failures, Task<TResult>> failureAsync
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -493,8 +493,8 @@ public static class FailOrMatchExtensions
     }
 
     private static Task<TResult> MatchFailureAsync<TResult>(
-        IReadOnlyList<Failure> failures,
-        Func<IReadOnlyList<Failure>, Task<TResult>> failureAsync
+        IReadOnlyList<Failures> failures,
+        Func<IReadOnlyList<Failures>, Task<TResult>> failureAsync
     )
     {
         var resultTask = failureAsync(failures);
@@ -504,8 +504,8 @@ public static class FailOrMatchExtensions
     }
 
     private static Task<TResult> MatchFailureAsync<TResult>(
-        Failure failure,
-        Func<Failure, Task<TResult>> failureAsync
+        Failures failure,
+        Func<Failures, Task<TResult>> failureAsync
     )
     {
         var resultTask = failureAsync(failure);

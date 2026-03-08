@@ -266,7 +266,7 @@ public static class ThenTestData
     }
 
     public static IEnumerable<
-        Func<(string Operation, Func<FailOr<int>, Task<IReadOnlyList<Failure>>> Capture)>
+        Func<(string Operation, Func<FailOr<int>, Task<IReadOnlyList<Failures>>> Capture)>
     > DirectIfFailThenFailuresAwareCases()
     {
         yield return () =>
@@ -274,7 +274,7 @@ public static class ThenTestData
                 "IfFailThen deferred failures-aware",
                 source =>
                 {
-                    IReadOnlyList<Failure>? observed = null;
+                    IReadOnlyList<Failures>? observed = null;
 
                     _ = source.IfFailThen(failures =>
                     {
@@ -291,7 +291,7 @@ public static class ThenTestData
                 "IfFailThenAsync deferred failures-aware",
                 async source =>
                 {
-                    IReadOnlyList<Failure>? observed = null;
+                    IReadOnlyList<Failures>? observed = null;
 
                     await source.IfFailThenAsync(failures =>
                     {
@@ -318,7 +318,7 @@ public static class ThenTestData
             (
                 "IfFailThen deferred failures-aware",
                 () =>
-                    FailOr.Success(1).IfFailThen((Func<IReadOnlyList<Failure>, FailOr<int>>)null!),
+                    FailOr.Success(1).IfFailThen((Func<IReadOnlyList<Failures>, FailOr<int>>)null!),
                 "alternative"
             );
         yield return () =>
@@ -333,7 +333,7 @@ public static class ThenTestData
                 () =>
                     FailOr
                         .Success(1)
-                        .IfFailThenAsync((Func<IReadOnlyList<Failure>, Task<FailOr<int>>>)null!),
+                        .IfFailThenAsync((Func<IReadOnlyList<Failures>, Task<FailOr<int>>>)null!),
                 "alternativeAsync"
             );
     }
@@ -459,7 +459,7 @@ public static class ThenTestData
     }
 
     public static IEnumerable<
-        Func<(string Operation, Func<Task<FailOr<int>>, Task<IReadOnlyList<Failure>>> Capture)>
+        Func<(string Operation, Func<Task<FailOr<int>>, Task<IReadOnlyList<Failures>>> Capture)>
     > LiftedIfFailThenFailuresAwareCases()
     {
         yield return () =>
@@ -467,7 +467,7 @@ public static class ThenTestData
                 "IfFailThen deferred failures-aware",
                 async sourceTask =>
                 {
-                    IReadOnlyList<Failure>? observed = null;
+                    IReadOnlyList<Failures>? observed = null;
 
                     await sourceTask.IfFailThen(failures =>
                     {
@@ -484,7 +484,7 @@ public static class ThenTestData
                 "IfFailThenAsync deferred failures-aware",
                 async sourceTask =>
                 {
-                    IReadOnlyList<Failure>? observed = null;
+                    IReadOnlyList<Failures>? observed = null;
 
                     await sourceTask.IfFailThenAsync(failures =>
                     {
@@ -554,7 +554,7 @@ public static class ThenTestData
                 "IfFailThen deferred failures-aware",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .IfFailThen((Func<IReadOnlyList<Failure>, FailOr<int>>)null!),
+                        .IfFailThen((Func<IReadOnlyList<Failures>, FailOr<int>>)null!),
                 "alternative"
             );
         yield return () =>
@@ -570,7 +570,7 @@ public static class ThenTestData
                 "IfFailThenAsync deferred failures-aware",
                 () =>
                     Task.FromResult(FailOr.Success(1))
-                        .IfFailThenAsync((Func<IReadOnlyList<Failure>, Task<FailOr<int>>>)null!),
+                        .IfFailThenAsync((Func<IReadOnlyList<Failures>, Task<FailOr<int>>>)null!),
                 "alternativeAsync"
             );
     }
@@ -699,7 +699,7 @@ public static class ThenAssertions
         await Assert.That(result.Failures.Count).IsEqualTo(0);
     }
 
-    public static async Task AssertFailure(FailOr<int> result, params Failure[] expectedFailures)
+    public static async Task AssertFailure(FailOr<int> result, params Failures[] expectedFailures)
     {
         using var _ = Assert.Multiple();
 

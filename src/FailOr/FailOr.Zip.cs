@@ -238,16 +238,16 @@ public static partial class FailOr
                 )
             );
 
-    private static Failure[] CollectFailures<T1, T2>(FailOr<T1> first, FailOr<T2> second) =>
+    private static Failures[] CollectFailures<T1, T2>(FailOr<T1> first, FailOr<T2> second) =>
         [.. FailuresOrEmpty(first), .. FailuresOrEmpty(second)];
 
-    private static Failure[] CollectFailures<T1, T2, T3>(
+    private static Failures[] CollectFailures<T1, T2, T3>(
         FailOr<T1> first,
         FailOr<T2> second,
         FailOr<T3> third
     ) => [.. FailuresOrEmpty(first), .. FailuresOrEmpty(second), .. FailuresOrEmpty(third)];
 
-    private static Failure[] CollectFailures<T1, T2, T3, T4>(
+    private static Failures[] CollectFailures<T1, T2, T3, T4>(
         FailOr<T1> first,
         FailOr<T2> second,
         FailOr<T3> third,
@@ -260,7 +260,7 @@ public static partial class FailOr
             .. FailuresOrEmpty(fourth),
         ];
 
-    private static Failure[] CollectFailures<T1, T2, T3, T4, T5>(
+    private static Failures[] CollectFailures<T1, T2, T3, T4, T5>(
         FailOr<T1> first,
         FailOr<T2> second,
         FailOr<T3> third,
@@ -275,7 +275,7 @@ public static partial class FailOr
             .. FailuresOrEmpty(fifth),
         ];
 
-    private static Failure[] CollectFailures<T1, T2, T3, T4, T5, T6>(
+    private static Failures[] CollectFailures<T1, T2, T3, T4, T5, T6>(
         FailOr<T1> first,
         FailOr<T2> second,
         FailOr<T3> third,
@@ -292,7 +292,7 @@ public static partial class FailOr
             .. FailuresOrEmpty(sixth),
         ];
 
-    private static Failure[] CollectFailures<T1, T2, T3, T4, T5, T6, T7>(
+    private static Failures[] CollectFailures<T1, T2, T3, T4, T5, T6, T7>(
         FailOr<T1> first,
         FailOr<T2> second,
         FailOr<T3> third,
@@ -311,6 +311,6 @@ public static partial class FailOr
             .. FailuresOrEmpty(seventh),
         ];
 
-    private static IReadOnlyList<Failure> FailuresOrEmpty<T>(FailOr<T> source) =>
+    private static IReadOnlyList<Failures> FailuresOrEmpty<T>(FailOr<T> source) =>
         source.IsSuccess ? [] : source.Failures;
 }

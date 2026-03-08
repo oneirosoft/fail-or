@@ -155,7 +155,9 @@ public static class FailOrThenExtensions
         /// var next = result.IfFailThen(failures => FailOr.Fail&lt;int&gt;(failures));
         /// </code>
         /// </example>
-        public FailOr<TSource> IfFailThen(Func<IReadOnlyList<Failure>, FailOr<TSource>> alternative)
+        public FailOr<TSource> IfFailThen(
+            Func<IReadOnlyList<Failures>, FailOr<TSource>> alternative
+        )
         {
             ArgumentNullException.ThrowIfNull(alternative);
 
@@ -202,7 +204,7 @@ public static class FailOrThenExtensions
         /// </code>
         /// </example>
         public Task<FailOr<TSource>> IfFailThenAsync(
-            Func<IReadOnlyList<Failure>, Task<FailOr<TSource>>> alternativeAsync
+            Func<IReadOnlyList<Failures>, Task<FailOr<TSource>>> alternativeAsync
         )
         {
             ArgumentNullException.ThrowIfNull(alternativeAsync);
@@ -370,7 +372,7 @@ public static class FailOrThenExtensions
         /// </code>
         /// </example>
         public Task<FailOr<TSource>> IfFailThen(
-            Func<IReadOnlyList<Failure>, FailOr<TSource>> alternative
+            Func<IReadOnlyList<Failures>, FailOr<TSource>> alternative
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -418,7 +420,7 @@ public static class FailOrThenExtensions
         /// </code>
         /// </example>
         public Task<FailOr<TSource>> IfFailThenAsync(
-            Func<IReadOnlyList<Failure>, Task<FailOr<TSource>>> alternativeAsync
+            Func<IReadOnlyList<Failures>, Task<FailOr<TSource>>> alternativeAsync
         )
         {
             ArgumentNullException.ThrowIfNull(sourceTask);
@@ -464,8 +466,8 @@ public static class FailOrThenExtensions
     }
 
     private static async Task<FailOr<TSource>> IfFailThenAsyncCore<TSource>(
-        IReadOnlyList<Failure> failures,
-        Func<IReadOnlyList<Failure>, Task<FailOr<TSource>>> alternativeAsync
+        IReadOnlyList<Failures> failures,
+        Func<IReadOnlyList<Failures>, Task<FailOr<TSource>>> alternativeAsync
     )
     {
         var resultTask = alternativeAsync(failures);

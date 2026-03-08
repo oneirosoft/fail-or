@@ -3,7 +3,7 @@ namespace FailOr.Tests;
 public static class CoreTestData
 {
     public static IEnumerable<
-        Func<(string Operation, Func<Failure[], FailOr<int>> Create)>
+        Func<(string Operation, Func<Failures[], FailOr<int>> Create)>
     > FailureFactoryCases()
     {
         yield return () => ("single failure", failures => FailOr<int>.Fail(failures[0]));
@@ -17,7 +17,7 @@ public static class CoreTestData
     > FailureFactoryGuardCases()
     {
         yield return () =>
-            ("null enumerable", () => FailOr<int>.Fail((IEnumerable<Failure>)null!), "failures");
+            ("null enumerable", () => FailOr<int>.Fail((IEnumerable<Failures>)null!), "failures");
         yield return () => ("empty enumerable", () => FailOr<int>.Fail([]), "failures");
         yield return () => ("empty params", () => FailOr<int>.Fail(), "failures");
     }
