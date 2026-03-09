@@ -267,6 +267,25 @@ var result = FailOr.Success("42")
     .Then(ParseNumber);
 ```
 
+### Validate with another `FailOr` and preserve the success
+
+```csharp
+public FailOr<TSource> ThenEnsure<TResult>(Func<TSource, FailOr<TResult>> ensure)
+```
+
+Intent:
+Run a validation step that can fail while keeping the original success value unchanged when validation succeeds.
+
+Example:
+
+```csharp
+var result = FailOr.Success(10)
+    .ThenEnsure(value =>
+        value >= 0
+            ? FailOr.Success(true)
+            : FailOr.Fail<bool>(Failure.General("Value must be non-negative.")));
+```
+
 ### Map asynchronously
 
 ```csharp
@@ -352,6 +371,28 @@ Example:
 ```csharp
 var result = await FailOr.Success("42")
     .ThenAsync(ParseNumberAsync);
+```
+
+### Validate asynchronously and preserve the success
+
+```csharp
+public Task<FailOr<TSource>> ThenEnsureAsync<TResult>(Func<TSource, Task<FailOr<TResult>>> ensureAsync)
+```
+
+Intent:
+Run an asynchronous validation step that can fail while keeping the original success value unchanged when validation succeeds.
+
+Example:
+
+```csharp
+var result = await FailOr.Success(10)
+    .ThenEnsureAsync(async value =>
+    {
+        await Task.Delay(10);
+        return value % 2 == 0
+            ? FailOr.Success(true)
+            : FailOr.Fail<bool>(Failure.General("Value must be even."));
+    });
 ```
 
 ### Run a side effect and preserve the success

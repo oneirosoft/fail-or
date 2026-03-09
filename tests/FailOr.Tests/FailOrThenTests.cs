@@ -27,6 +27,41 @@ public class FailOrThenTests
     }
 
     [Test]
+    [Arguments(1)]
+    [Arguments(5)]
+    public async Task ThenEnsure_preserves_successful_values(int value)
+    {
+        var source = FailOr.Success(value);
+        var calls = 0;
+        var observed = 0;
+
+        var result = source.ThenEnsure(x =>
+        {
+            observed = x;
+            calls++;
+            return FailOr.Success(x * 2);
+        });
+
+        using var _ = Assert.Multiple();
+        await Assert.That(calls).IsEqualTo(1);
+        await Assert.That(observed).IsEqualTo(value);
+        await ThenAssertions.AssertEquivalent(result, source);
+    }
+
+    [Test]
+    public async Task ThenEnsure_returns_ensure_failures()
+    {
+        var firstFailure = Failure.General("validation failed");
+        var secondFailure = Failure.Validation("Value", "Out of range");
+
+        var result = FailOr
+            .Success(5)
+            .ThenEnsure(_ => FailOr.Fail<bool>(firstFailure, secondFailure));
+
+        await ThenAssertions.AssertFailure(result, firstFailure, secondFailure);
+    }
+
+    [Test]
     [Arguments(1, 4)]
     [Arguments(5, 8)]
     public async Task ThenAsync_map_transforms_successful_values(int value, int expected)
@@ -46,6 +81,41 @@ public class FailOrThenTests
             .ThenAsync(x => Task.FromResult(FailOr.Success(x + 4)));
 
         await ThenAssertions.AssertSuccess(result, expected);
+    }
+
+    [Test]
+    [Arguments(1)]
+    [Arguments(5)]
+    public async Task ThenEnsureAsync_preserves_successful_values(int value)
+    {
+        var source = FailOr.Success(value);
+        var calls = 0;
+        var observed = 0;
+
+        var result = await source.ThenEnsureAsync(x =>
+        {
+            observed = x;
+            calls++;
+            return Task.FromResult(FailOr.Success(x * 2));
+        });
+
+        using var _ = Assert.Multiple();
+        await Assert.That(calls).IsEqualTo(1);
+        await Assert.That(observed).IsEqualTo(value);
+        await ThenAssertions.AssertEquivalent(result, source);
+    }
+
+    [Test]
+    public async Task ThenEnsureAsync_returns_ensure_failures()
+    {
+        var firstFailure = Failure.General("async validation failed");
+        var secondFailure = Failure.Validation("Value", "Still out of range");
+
+        var result = await FailOr
+            .Success(5)
+            .ThenEnsureAsync(_ => Task.FromResult(FailOr.Fail<bool>(firstFailure, secondFailure)));
+
+        await ThenAssertions.AssertFailure(result, firstFailure, secondFailure);
     }
 
     [Test]
@@ -153,6 +223,31 @@ public class FailOrThenTests
     }
 
     [Test]
+    public async Task ThenEnsure_propagates_delegate_exceptions()
+    {
+        var expected = new InvalidOperationException("ThenEnsure failed");
+
+        try
+        {
+            _ = FailOr
+                .Success(1)
+                .ThenEnsure(
+                    (Func<int, FailOr<bool>>)(
+                        _ =>
+                        {
+                            throw expected;
+                        }
+                    )
+                );
+            throw new Exception("Expected ThenEnsure to rethrow the original exception.");
+        }
+        catch (InvalidOperationException actual)
+        {
+            await Assert.That(ReferenceEquals(actual, expected)).IsTrue();
+        }
+    }
+
+    [Test]
     public async Task ThenDoAsync_propagates_delegate_exceptions()
     {
         var expected = new InvalidOperationException("ThenDoAsync failed");
@@ -161,6 +256,26 @@ public class FailOrThenTests
         {
             _ = await FailOr.Success(1).ThenDoAsync(_ => Task.FromException(expected));
             throw new Exception("Expected ThenDoAsync to rethrow the original exception.");
+        }
+        catch (InvalidOperationException actual)
+        {
+            await Assert.That(ReferenceEquals(actual, expected)).IsTrue();
+        }
+    }
+
+    [Test]
+    public async Task ThenEnsureAsync_propagates_delegate_exceptions()
+    {
+        var expected = new InvalidOperationException("ThenEnsureAsync failed");
+
+        try
+        {
+            _ = await FailOr
+                .Success(1)
+                .ThenEnsureAsync(
+                    (Func<int, Task<FailOr<bool>>>)(_ => Task.FromException<FailOr<bool>>(expected))
+                );
+            throw new Exception("Expected ThenEnsureAsync to rethrow the original exception.");
         }
         catch (InvalidOperationException actual)
         {

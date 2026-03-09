@@ -11,7 +11,7 @@ It centers on three public entry points:
 The library also includes convenience APIs for common result workflows:
 
 - `FailOr.Success(...)` and `FailOr.Fail(...)` for construction
-- `Then(...)`, `ThenAsync(...)`, `ThenDo(...)`, and `ThenDoAsync(...)` for chaining and success-side effects
+- `Then(...)`, `ThenAsync(...)`, `ThenEnsure(...)`, `ThenEnsureAsync(...)`, `ThenDo(...)`, and `ThenDoAsync(...)` for chaining and success-side effects
 - `Match(...)` and `MatchFirst(...)` for branching
 - `Zip(...)` for aggregating multiple results
 - `Combine(...)` for choosing a preferred success with fallback
@@ -146,7 +146,7 @@ if (result.IsFailure)
 }
 ```
 
-You can also translate the exception into a custom repo-native result:
+You can also translate the exception into a custom repository-native result:
 
 ```csharp
 using FailOr;
@@ -155,6 +155,38 @@ var result = FailOr.Success("42x")
     .Try(
         value => int.Parse(value),
         exception => Failure.General($"Mapping failed: {exception.Message}"));
+```
+
+### Validate success values with `ThenEnsure`
+
+Use `ThenEnsure` when the next step should validate the current success and keep that original value flowing when validation succeeds.
+
+```csharp
+using FailOr;
+
+var result = FailOr.Success(10)
+    .ThenEnsure(value =>
+        value >= 0
+            ? FailOr.Success(true)
+            : FailOr.Fail<bool>(Failure.General("Value must be non-negative.")))
+    .Then(value => value + 5);
+
+var finalValue = result.UnsafeUnwrap(); // 15
+```
+
+Async validation helpers are also available:
+
+```csharp
+using FailOr;
+
+var result = await FailOr.Success(10)
+    .ThenEnsureAsync(async value =>
+    {
+        await Task.Delay(10);
+        return value % 2 == 0
+            ? FailOr.Success(true)
+            : FailOr.Fail<bool>(Failure.General("Value must be even."));
+    });
 ```
 
 ### Run success-side effects with `ThenDo`

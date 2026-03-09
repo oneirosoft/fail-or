@@ -54,6 +54,29 @@ public static class FailOrThenExtensions
         }
 
         /// <summary>
+        /// Validates a successful value with another <see cref="FailOr{T}"/> check while preserving the original success.
+        /// </summary>
+        /// <param name="ensure">The validation function to apply when the source is successful.</param>
+        /// <returns>
+        /// The original success unchanged when the validation succeeds, the validation failures when it fails,
+        /// or the original failures when the source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="ensure"/> is <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = result.ThenEnsure(x => x > 0 ? FailOr.Success(true) : FailOr.Fail&lt;bool&gt;(Failure.General("Must be positive")));
+        /// </code>
+        /// </example>
+        public FailOr<TSource> ThenEnsure<TResult>(Func<TSource, FailOr<TResult>> ensure)
+        {
+            ArgumentNullException.ThrowIfNull(ensure);
+
+            return source.IsFailure ? source : ThenEnsureCore(source.UnsafeUnwrap(), ensure);
+        }
+
+        /// <summary>
         /// Asynchronously maps a successful value to a new successful result.
         /// </summary>
         /// <param name="mapAsync">The asynchronous projection to apply when the source is successful.</param>
@@ -101,6 +124,33 @@ public static class FailOrThenExtensions
             return source.IsFailure
                 ? Task.FromResult(Fail<TSource, TResult>(source))
                 : ThenBindAsync(source.UnsafeUnwrap(), bindAsync);
+        }
+
+        /// <summary>
+        /// Asynchronously validates a successful value with another <see cref="FailOr{T}"/> check while preserving the original success.
+        /// </summary>
+        /// <param name="ensureAsync">The asynchronous validation function to apply when the source is successful.</param>
+        /// <returns>
+        /// A task producing the original success unchanged when the validation succeeds, the validation failures when it fails,
+        /// or the original failures when the source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="ensureAsync"/> is <see langword="null"/> or returns <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = await result.ThenEnsureAsync(x => Task.FromResult(x > 0 ? FailOr.Success(true) : FailOr.Fail&lt;bool&gt;(Failure.General("Must be positive"))));
+        /// </code>
+        /// </example>
+        public Task<FailOr<TSource>> ThenEnsureAsync<TResult>(
+            Func<TSource, Task<FailOr<TResult>>> ensureAsync
+        )
+        {
+            ArgumentNullException.ThrowIfNull(ensureAsync);
+
+            return source.IsFailure
+                ? Task.FromResult(source)
+                : ThenEnsureAsyncCore(source.UnsafeUnwrap(), ensureAsync);
         }
 
         /// <summary>
@@ -316,6 +366,30 @@ public static class FailOrThenExtensions
         }
 
         /// <summary>
+        /// Validates the successful value of a task-wrapped result with another <see cref="FailOr{T}"/> check while preserving the original success.
+        /// </summary>
+        /// <param name="ensure">The validation function to apply when the awaited source is successful.</param>
+        /// <returns>
+        /// A task producing the original success unchanged when the validation succeeds, the validation failures when it fails,
+        /// or the original failures when the awaited source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the awaited source task or <paramref name="ensure"/> is <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = await resultTask.ThenEnsure(x => x > 0 ? FailOr.Success(true) : FailOr.Fail&lt;bool&gt;(Failure.General("Must be positive")));
+        /// </code>
+        /// </example>
+        public Task<FailOr<TSource>> ThenEnsure<TResult>(Func<TSource, FailOr<TResult>> ensure)
+        {
+            ArgumentNullException.ThrowIfNull(sourceTask);
+            ArgumentNullException.ThrowIfNull(ensure);
+
+            return ThenCore(sourceTask, source => Task.FromResult(source.ThenEnsure(ensure)));
+        }
+
+        /// <summary>
         /// Asynchronously maps the successful value of a task-wrapped result to a new successful result.
         /// </summary>
         /// <param name="mapAsync">The asynchronous projection to apply when the awaited source is successful.</param>
@@ -361,6 +435,33 @@ public static class FailOrThenExtensions
             ArgumentNullException.ThrowIfNull(bindAsync);
 
             return ThenCore(sourceTask, source => source.ThenAsync(bindAsync));
+        }
+
+        /// <summary>
+        /// Asynchronously validates the successful value of a task-wrapped result with another <see cref="FailOr{T}"/> check while preserving the original success.
+        /// </summary>
+        /// <param name="ensureAsync">The asynchronous validation function to apply when the awaited source is successful.</param>
+        /// <returns>
+        /// A task producing the original success unchanged when the validation succeeds, the validation failures when it fails,
+        /// or the original failures when the awaited source is failed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the awaited source task or <paramref name="ensureAsync"/> is <see langword="null"/>,
+        /// or when <paramref name="ensureAsync"/> returns <see langword="null"/>.
+        /// </exception>
+        /// <example>
+        /// <code>
+        /// var next = await resultTask.ThenEnsureAsync(x => Task.FromResult(x > 0 ? FailOr.Success(true) : FailOr.Fail&lt;bool&gt;(Failure.General("Must be positive"))));
+        /// </code>
+        /// </example>
+        public Task<FailOr<TSource>> ThenEnsureAsync<TResult>(
+            Func<TSource, Task<FailOr<TResult>>> ensureAsync
+        )
+        {
+            ArgumentNullException.ThrowIfNull(sourceTask);
+            ArgumentNullException.ThrowIfNull(ensureAsync);
+
+            return ThenCore(sourceTask, source => source.ThenEnsureAsync(ensureAsync));
         }
 
         /// <summary>
@@ -552,6 +653,27 @@ public static class FailOrThenExtensions
         ArgumentNullException.ThrowIfNull(resultTask);
 
         return await resultTask.ConfigureAwait(false);
+    }
+
+    private static FailOr<TSource> ThenEnsureCore<TSource, TResult>(
+        TSource value,
+        Func<TSource, FailOr<TResult>> ensure
+    )
+    {
+        var ensured = ensure(value);
+        return ensured.IsFailure ? FailOr.Fail<TSource>(ensured.Failures) : FailOr.Success(value);
+    }
+
+    private static async Task<FailOr<TSource>> ThenEnsureAsyncCore<TSource, TResult>(
+        TSource value,
+        Func<TSource, Task<FailOr<TResult>>> ensureAsync
+    )
+    {
+        var resultTask = ensureAsync(value);
+        ArgumentNullException.ThrowIfNull(resultTask);
+
+        var ensured = await resultTask.ConfigureAwait(false);
+        return ensured.IsFailure ? FailOr.Fail<TSource>(ensured.Failures) : FailOr.Success(value);
     }
 
     private static async Task<FailOr<TSource>> ThenDoAsyncCore<TSource>(
