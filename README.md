@@ -188,6 +188,7 @@ var result = await FailOr.Success(10)
             : FailOr.Fail<bool>(Failure.General("Value must be even."));
     });
 ```
+
 ### Run success-side effects with `ThenDo`
 
 Use `ThenDo` when you want to observe a success without changing the flowing result.
