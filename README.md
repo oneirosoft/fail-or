@@ -11,7 +11,8 @@ It centers on three public entry points:
 The library also includes convenience APIs for common result workflows:
 
 - `FailOr.Success(...)` and `FailOr.Fail(...)` for construction
-- `Then(...)`, `ThenAsync(...)`, `ThenEnsure(...)`, `ThenEnsureAsync(...)`, `ThenDo(...)`, and `ThenDoAsync(...)` for chaining and success-side effects
+- `Then(...)`, `ThenAsync(...)`, `ThenEnsure(...)`, `ThenEnsureAsync(...)`, `ThenDo(...)`, `ThenDoAsync(...)`, `IfSuccess(...)`, and `IfSuccessAsync(...)` for chaining, success-side effects, and terminal success observation
+- `IfFail(...)` and `IfFailAsync(...)` for observing failures without recovering
 - `Match(...)` and `MatchFirst(...)` for branching
 - `Zip(...)` for aggregating multiple results
 - `Combine(...)` for choosing a preferred success with fallback
@@ -215,6 +216,49 @@ var result = await Task.FromResult(FailOr.Success(10))
         Console.WriteLine($"Observed: {value}");
     })
     .Then(value => value + 5);
+```
+
+### Observe terminal success with `IfSuccess`
+
+Use `IfSuccess` when you want to observe a success as a terminal side effect and do not need to keep chaining the `FailOr<T>` value. Use `ThenDo` when the same observation should preserve the result for continued chaining.
+
+```csharp
+using FailOr;
+
+FailOr.Success(10)
+    .IfSuccess(value => Console.WriteLine($"Observed terminal success: {value}"));
+
+await Task.FromResult(FailOr.Success(10))
+    .IfSuccessAsync(async value =>
+    {
+        await Task.Delay(10);
+        Console.WriteLine($"Observed terminal success: {value}");
+    });
+```
+
+### Run failure-side effects with `IfFail`
+
+Use `IfFail` when you want to observe a failure without replacing it, recovering from it, or otherwise changing control flow.
+
+```csharp
+using FailOr;
+
+var result = FailOr.Fail<int>(Failure.General("Primary lookup failed."));
+
+result.IfFail(failures => Console.WriteLine($"Observed: {failures[0].Details}"));
+```
+
+Async variants are available for both direct and task-wrapped results:
+
+```csharp
+using FailOr;
+
+await Task.FromResult(FailOr.Fail<int>(Failure.General("Primary lookup failed.")))
+    .IfFailAsync(async failures =>
+    {
+        await Task.Delay(10);
+        Console.WriteLine($"Observed {failures.Count} failure(s).");
+    });
 ```
 
 ### Branch with `Match`

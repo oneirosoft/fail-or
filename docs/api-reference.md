@@ -302,6 +302,45 @@ var result = await FailOr.Success(10)
     .ThenAsync(async x => await GetAdjustedValueAsync(x));
 ```
 
+### Observe a success and keep chaining
+
+```csharp
+public FailOr<TSource> ThenDo(Action<TSource> action)
+public Task<FailOr<TSource>> ThenDoAsync(Func<TSource, Task> actionAsync)
+public Task<FailOr<TSource>> ThenDo(Action<TSource> action)
+public Task<FailOr<TSource>> ThenDoAsync(Func<TSource, Task> actionAsync)
+```
+
+Intent:
+Run a side effect only when the source is successful and preserve the original result for continued chaining.
+
+Example:
+
+```csharp
+var result = FailOr.Success(10)
+    .ThenDo(value => Console.WriteLine(value))
+    .Then(value => value + 5);
+```
+
+### Observe a success terminally
+
+```csharp
+public void IfSuccess(Action<TSource> action)
+public Task IfSuccessAsync(Func<TSource, Task> actionAsync)
+public Task IfSuccess(Action<TSource> action)
+public Task IfSuccessAsync(Func<TSource, Task> actionAsync)
+```
+
+Intent:
+Run a side effect only when the source is successful, but end the pipeline instead of preserving a `FailOr<TSource>` for continued chaining.
+
+Example:
+
+```csharp
+FailOr.Success(10)
+    .IfSuccess(value => Console.WriteLine(value));
+```
+
 ### Map a success value with exception handling
 
 ```csharp
@@ -430,6 +469,27 @@ var result = await FailOr.Success(10)
 ## Recovering From Failures
 
 These APIs preserve an existing success. They only apply the fallback when the source is failed.
+
+### Observe failures without recovering
+
+```csharp
+public void IfFail(Action<IReadOnlyList<Failures>> action)
+public Task IfFailAsync(Func<IReadOnlyList<Failures>, Task> actionAsync)
+```
+
+Intent:
+Run logging, auditing, metrics, or other side effects only when the result is failed, without replacing or transforming the original result.
+
+Example:
+
+```csharp
+result.IfFail(failures => logger.LogError("Primary failure: {Message}", failures[0].Details));
+
+await result.IfFailAsync(async failures =>
+{
+    await AuditAsync(failures);
+});
+```
 
 ### Provide a fallback result
 
@@ -647,7 +707,7 @@ var result = FailOr.Zip(
 
 ## Task-Wrapped Result Extensions
 
-The library also provides the same `Then`, `ThenAsync`, `Try`, `TryAsync`, `ThenDo`, `ThenDoAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
+The library also provides the same `Then`, `ThenAsync`, `Try`, `TryAsync`, `ThenDo`, `ThenDoAsync`, `IfFail`, `IfFailAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
 
 ```csharp
 Task<FailOr<T>>
@@ -685,6 +745,23 @@ var result = await GetUserAsync()
     .Then(user => user.Email);
 ```
 
+### Observe task-wrapped failures without recovering
+
+```csharp
+public Task IfFail(Action<IReadOnlyList<Failures>> action)
+public Task IfFailAsync(Func<IReadOnlyList<Failures>, Task> actionAsync)
+```
+
+Intent:
+Observe failures from a `Task<FailOr<T>>` after awaiting it, while leaving the original success or failure unchanged.
+
+Example:
+
+```csharp
+await GetUserAsync()
+    .IfFail(failures => logger.LogWarning("Observed {Count} failure(s)", failures.Count));
+```
+
 ## Validation Rules And Exceptions
 
 The current API validates a few important invalid states:
@@ -705,6 +782,7 @@ The current API validates a few important invalid states:
 - Use `Success` and `Fail` to create results.
 - Use `Then` and `ThenAsync` to continue only on success.
 - Use `ThenDo` and `ThenDoAsync` to run side effects while preserving the success value.
+- Use `IfFail` and `IfFailAsync` to run side effects while preserving the original failure.
 - Use `IfFailThen` and `IfFailThenAsync` to recover from failures.
 - Use `Match` when you want a final value from both branches.
 - Use `MatchFirst` when only the first failure matters.
