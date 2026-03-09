@@ -11,7 +11,7 @@ It centers on three public entry points:
 The library also includes convenience APIs for common result workflows:
 
 - `FailOr.Success(...)` and `FailOr.Fail(...)` for construction
-- `Then(...)`, `ThenAsync(...)`, `ThenEnsure(...)`, `ThenEnsureAsync(...)`, `ThenDo(...)`, `ThenDoAsync(...)`, `IfSuccess(...)`, and `IfSuccessAsync(...)` for chaining, success-side effects, and terminal success observation
+- `Then(...)`, `ThenAsync(...)`, `ThenEnsure(...)`, `ThenEnsureAsync(...)`, `FailWhen(...)`, `FailWhenAsync(...)`, `ThenDo(...)`, `ThenDoAsync(...)`, `IfSuccess(...)`, and `IfSuccessAsync(...)` for chaining, success validation, success-side effects, and terminal success observation
 - `IfFail(...)` and `IfFailAsync(...)` for observing failures without recovering
 - `Match(...)` and `MatchFirst(...)` for branching
 - `Zip(...)` for aggregating multiple results
@@ -188,6 +188,32 @@ var result = await FailOr.Success(10)
             ? FailOr.Success(true)
             : FailOr.Fail<bool>(Failure.General("Value must be even."));
     });
+```
+
+### Fail a success when a predicate matches with `FailWhen`
+
+Use `FailWhen` when the validation rule is naturally expressed as "this success should fail when this condition is true." Use `ThenEnsure` when the validation step is better modeled as another `FailOr`-producing operation.
+
+```csharp
+using FailOr;
+
+var result = FailOr.Success(3)
+    .FailWhen(value => value % 2 != 0, Failure.General("Value must be even."));
+```
+
+Async predicate-based validation is available for direct and task-wrapped results:
+
+```csharp
+using FailOr;
+
+var result = await Task.FromResult(FailOr.Success(10))
+    .FailWhenAsync(
+        async value =>
+        {
+            await Task.Delay(10);
+            return value < 0;
+        },
+        Failure.General("Value must be non-negative."));
 ```
 
 ### Run success-side effects with `ThenDo`

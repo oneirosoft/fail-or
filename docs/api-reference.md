@@ -286,6 +286,24 @@ var result = FailOr.Success(10)
             : FailOr.Fail<bool>(Failure.General("Value must be non-negative.")));
 ```
 
+### Fail a success when a predicate matches
+
+```csharp
+public FailOr<TSource> FailWhen(Func<TSource, bool> predicate, Failures failure)
+```
+
+Intent:
+Turn a successful value into a failed result when a predicate returns `true`, while preserving the original success when the predicate returns `false`.
+
+Example:
+
+```csharp
+var result = FailOr.Success(10)
+    .FailWhen(value => value < 0, Failure.General("Value must be non-negative."));
+```
+
+Use `FailWhen` for direct predicate-style validation. Use `ThenEnsure` when the validation step naturally produces another `FailOr`.
+
 ### Map asynchronously
 
 ```csharp
@@ -432,6 +450,28 @@ var result = await FailOr.Success(10)
             ? FailOr.Success(true)
             : FailOr.Fail<bool>(Failure.General("Value must be even."));
     });
+```
+
+### Fail asynchronously when a predicate matches
+
+```csharp
+public Task<FailOr<TSource>> FailWhenAsync(Func<TSource, Task<bool>> predicateAsync, Failures failure)
+```
+
+Intent:
+Turn a successful value into a failed result when an asynchronous predicate returns `true`, while preserving the original success when the predicate returns `false`.
+
+Example:
+
+```csharp
+var result = await FailOr.Success(10)
+    .FailWhenAsync(
+        async value =>
+        {
+            await Task.Delay(10);
+            return value < 0;
+        },
+        Failure.General("Value must be non-negative."));
 ```
 
 ### Run a side effect and preserve the success
@@ -707,7 +747,7 @@ var result = FailOr.Zip(
 
 ## Task-Wrapped Result Extensions
 
-The library also provides the same `Then`, `ThenAsync`, `Try`, `TryAsync`, `ThenDo`, `ThenDoAsync`, `IfFail`, `IfFailAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
+The library also provides the same `Then`, `ThenAsync`, `ThenEnsure`, `ThenEnsureAsync`, `FailWhen`, `FailWhenAsync`, `Try`, `TryAsync`, `ThenDo`, `ThenDoAsync`, `IfFail`, `IfFailAsync`, `IfFailThen`, `IfFailThenAsync`, `Match`, `MatchAsync`, `MatchFirst`, and `MatchFirstAsync` APIs for:
 
 ```csharp
 Task<FailOr<T>>
@@ -724,6 +764,24 @@ var message = await GetUserAsync()
     .Match(
         success: email => $"Email: {email}",
         failure: failures => failures[0].Details);
+```
+
+### Fail a task-wrapped success when a predicate matches
+
+```csharp
+public Task<FailOr<TSource>> FailWhen(Func<TSource, bool> predicate, Failures failure)
+public Task<FailOr<TSource>> FailWhenAsync(Func<TSource, Task<bool>> predicateAsync, Failures failure)
+```
+
+Intent:
+Apply predicate-style validation after awaiting a `Task<FailOr<T>>`, while preserving the original success when the predicate does not match.
+
+Example:
+
+```csharp
+var result = await GetUserAgeAsync()
+    .FailWhen(age => age < 0, Failure.General("Age must be non-negative."))
+    .FailWhenAsync(async age => await IsBlockedAgeAsync(age), Failure.General("Age is blocked."));
 ```
 
 ### Preserve a task-wrapped success while running side effects
@@ -775,12 +833,14 @@ The current API validates a few important invalid states:
 - `UnsafeUnwrap` throws `InvalidOperationException` when the result is failed.
 - Async delegate-based APIs throw `ArgumentNullException` when the delegate itself is `null`.
 - Async delegate-based APIs also throw `ArgumentNullException` when the selected delegate returns a `null` task.
+- `FailWhen` and `FailWhenAsync` throw `ArgumentNullException` for a `null` predicate or `null` failure input.
 - `Try` and `TryAsync` convert exceptions thrown by mapping delegates into `Failure.Exceptional(...)` unless you provide a custom exception projection.
 
 ## Choosing The Right API
 
 - Use `Success` and `Fail` to create results.
 - Use `Then` and `ThenAsync` to continue only on success.
+- Use `FailWhen` and `FailWhenAsync` for predicate-style validation that should fail on a matching condition.
 - Use `ThenDo` and `ThenDoAsync` to run side effects while preserving the success value.
 - Use `IfFail` and `IfFailAsync` to run side effects while preserving the original failure.
 - Use `IfFailThen` and `IfFailThenAsync` to recover from failures.
