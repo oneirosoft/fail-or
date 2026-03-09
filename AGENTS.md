@@ -33,3 +33,11 @@
 - When changing public APIs or observable behavior, review the documentation in `docs/` and `README.md` in the same change.
 - Update existing documentation when a function, signature, behavior, or usage pattern changes.
 - Add or expand documentation in `docs/` and `README.md` when new functionality is introduced and is not already documented.
+
+## Git And Issues
+
+- Use Conventional Commits for commit messages.
+- When a GitHub issue number and title are provided in the context, format the commit subject as `{type}({issue_num}): {title}`.
+- Use the appropriate Conventional Commit type for the change, such as `feat`, `fix`, `docs`, or `chore`.
+- Mention the GitHub issue in the commit body or footer with GitHub issue syntax such as `Refs #11` or `Closes #11` so the commit is linked to the issue.
+- After creating or pushing the related commit, leave a comment on the GitHub issue that includes the commit hash for the change.
