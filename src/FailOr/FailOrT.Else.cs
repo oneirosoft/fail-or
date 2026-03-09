@@ -68,7 +68,8 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or the value produced by <paramref name="alternativeAsync"/> when the source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when <paramref name="alternativeAsync"/> is <see langword="null"/> or returns <see langword="null"/>.
+        /// Thrown when <paramref name="alternativeAsync"/> is <see langword="null"/>,
+        /// or when a failed source invokes <paramref name="alternativeAsync"/> and it returns <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>
@@ -92,7 +93,8 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or the value produced by <paramref name="alternativeAsync"/> when the source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when <paramref name="alternativeAsync"/> is <see langword="null"/> or returns <see langword="null"/>.
+        /// Thrown when <paramref name="alternativeAsync"/> is <see langword="null"/>,
+        /// or when a failed source invokes <paramref name="alternativeAsync"/> and it returns <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>
@@ -121,7 +123,7 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or <paramref name="alternative"/> when the awaited source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when the awaited source task is <see langword="null"/>.
+        /// Thrown when <c>sourceTask</c> is <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>
@@ -143,7 +145,7 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or the value produced by <paramref name="alternative"/> when the awaited source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when the awaited source task or <paramref name="alternative"/> is <see langword="null"/>.
+        /// Thrown when <c>sourceTask</c> or <paramref name="alternative"/> is <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>
@@ -166,7 +168,7 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or the value produced by <paramref name="alternative"/> when the awaited source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when the awaited source task or <paramref name="alternative"/> is <see langword="null"/>.
+        /// Thrown when <c>sourceTask</c> or <paramref name="alternative"/> is <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>
@@ -189,8 +191,8 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or the value produced by <paramref name="alternativeAsync"/> when the awaited source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when the awaited source task or <paramref name="alternativeAsync"/> is <see langword="null"/>,
-        /// or when <paramref name="alternativeAsync"/> returns <see langword="null"/>.
+        /// Thrown when <c>sourceTask</c> or <paramref name="alternativeAsync"/> is <see langword="null"/>,
+        /// or when the awaited source is failed, invokes <paramref name="alternativeAsync"/>, and it returns <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>
@@ -213,8 +215,8 @@ public static class FailOrElseExtensions
         /// A task producing the wrapped success value, or the value produced by <paramref name="alternativeAsync"/> when the awaited source is failed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// Thrown when the awaited source task or <paramref name="alternativeAsync"/> is <see langword="null"/>,
-        /// or when <paramref name="alternativeAsync"/> returns <see langword="null"/>.
+        /// Thrown when <c>sourceTask</c> or <paramref name="alternativeAsync"/> is <see langword="null"/>,
+        /// or when the awaited source is failed, invokes <paramref name="alternativeAsync"/>, and it returns <see langword="null"/>.
         /// </exception>
         /// <example>
         /// <code>

@@ -2,11 +2,19 @@ namespace FailOr.Tests;
 
 public static class ElseTestData
 {
+    private const int SuccessAlternativeValue = 99;
+    private const int ImmediateFallbackValue = 90;
+    private const int DeferredFallbackBase = 40;
+    private const int FailuresAwareFallbackBase = 50;
+    private const int DeferredAsyncFallbackBase = 60;
+    private const int FailuresAwareAsyncFallbackBase = 70;
+
     public static IEnumerable<
         Func<(string Operation, Func<FailOr<int>, ElseInvocationCounter, Task<int>> Invoke)>
     > DirectSuccessCases()
     {
-        yield return () => ("Else value", (source, _) => Task.FromResult(source.Else(99)));
+        yield return () =>
+            ("Else value", (source, _) => Task.FromResult(source.Else(SuccessAlternativeValue)));
         yield return () =>
             (
                 "Else deferred",
@@ -42,12 +50,19 @@ public static class ElseTestData
         )>
     > DirectFailureCases()
     {
-        yield return () => ("Else value", (source, _) => Task.FromResult(source.Else(90)), 90, 0);
+        yield return () =>
+            (
+                "Else value",
+                (source, _) => Task.FromResult(source.Else(ImmediateFallbackValue)),
+                ImmediateFallbackValue,
+                0
+            );
         yield return () =>
             (
                 "Else deferred",
-                (source, counter) => Task.FromResult(source.Else(() => 40 + counter.Increment())),
-                41,
+                (source, counter) =>
+                    Task.FromResult(source.Else(() => DeferredFallbackBase + counter.Increment())),
+                DeferredFallbackBase + 1,
                 1
             );
         yield return () =>
@@ -55,17 +70,21 @@ public static class ElseTestData
                 "Else deferred failures-aware",
                 (source, counter) =>
                     Task.FromResult(
-                        source.Else(failures => 50 + failures.Count + counter.Increment())
+                        source.Else(failures =>
+                            FailuresAwareFallbackBase + failures.Count + counter.Increment()
+                        )
                     ),
-                52,
+                FailuresAwareFallbackBase + 2,
                 1
             );
         yield return () =>
             (
                 "ElseAsync deferred",
                 (source, counter) =>
-                    source.ElseAsync(() => Task.FromResult(60 + counter.Increment())),
-                61,
+                    source.ElseAsync(() =>
+                        Task.FromResult(DeferredAsyncFallbackBase + counter.Increment())
+                    ),
+                DeferredAsyncFallbackBase + 1,
                 1
             );
         yield return () =>
@@ -73,9 +92,11 @@ public static class ElseTestData
                 "ElseAsync deferred failures-aware",
                 (source, counter) =>
                     source.ElseAsync(failures =>
-                        Task.FromResult(70 + failures.Count + counter.Increment())
+                        Task.FromResult(
+                            FailuresAwareAsyncFallbackBase + failures.Count + counter.Increment()
+                        )
                     ),
-                72,
+                FailuresAwareAsyncFallbackBase + 2,
                 1
             );
     }
@@ -167,7 +188,8 @@ public static class ElseTestData
         Func<(string Operation, Func<Task<FailOr<int>>, ElseInvocationCounter, Task<int>> Invoke)>
     > LiftedSuccessCases()
     {
-        yield return () => ("Else value", (sourceTask, _) => sourceTask.Else(99));
+        yield return () =>
+            ("Else value", (sourceTask, _) => sourceTask.Else(SuccessAlternativeValue));
         yield return () =>
             ("Else deferred", (sourceTask, counter) => sourceTask.Else(() => counter.Increment()));
         yield return () =>
@@ -201,28 +223,39 @@ public static class ElseTestData
         )>
     > LiftedFailureCases()
     {
-        yield return () => ("Else value", (sourceTask, _) => sourceTask.Else(90), 90, 0);
+        yield return () =>
+            (
+                "Else value",
+                (sourceTask, _) => sourceTask.Else(ImmediateFallbackValue),
+                ImmediateFallbackValue,
+                0
+            );
         yield return () =>
             (
                 "Else deferred",
-                (sourceTask, counter) => sourceTask.Else(() => 40 + counter.Increment()),
-                41,
+                (sourceTask, counter) =>
+                    sourceTask.Else(() => DeferredFallbackBase + counter.Increment()),
+                DeferredFallbackBase + 1,
                 1
             );
         yield return () =>
             (
                 "Else deferred failures-aware",
                 (sourceTask, counter) =>
-                    sourceTask.Else(failures => 50 + failures.Count + counter.Increment()),
-                52,
+                    sourceTask.Else(failures =>
+                        FailuresAwareFallbackBase + failures.Count + counter.Increment()
+                    ),
+                FailuresAwareFallbackBase + 2,
                 1
             );
         yield return () =>
             (
                 "ElseAsync deferred",
                 (sourceTask, counter) =>
-                    sourceTask.ElseAsync(() => Task.FromResult(60 + counter.Increment())),
-                61,
+                    sourceTask.ElseAsync(() =>
+                        Task.FromResult(DeferredAsyncFallbackBase + counter.Increment())
+                    ),
+                DeferredAsyncFallbackBase + 1,
                 1
             );
         yield return () =>
@@ -230,9 +263,11 @@ public static class ElseTestData
                 "ElseAsync deferred failures-aware",
                 (sourceTask, counter) =>
                     sourceTask.ElseAsync(failures =>
-                        Task.FromResult(70 + failures.Count + counter.Increment())
+                        Task.FromResult(
+                            FailuresAwareAsyncFallbackBase + failures.Count + counter.Increment()
+                        )
                     ),
-                72,
+                FailuresAwareAsyncFallbackBase + 2,
                 1
             );
     }
@@ -373,81 +408,81 @@ public static class ElseTestData
             (
                 "Else value success",
                 FailOr.Success(1),
-                source => Task.FromResult(source.Else(90)),
-                sourceTask => sourceTask.Else(90),
+                source => Task.FromResult(source.Else(ImmediateFallbackValue)),
+                sourceTask => sourceTask.Else(ImmediateFallbackValue),
                 1
             );
         yield return () =>
             (
                 "Else deferred success",
                 FailOr.Success(1),
-                source => Task.FromResult(source.Else(() => 90)),
-                sourceTask => sourceTask.Else(() => 90),
+                source => Task.FromResult(source.Else(() => ImmediateFallbackValue)),
+                sourceTask => sourceTask.Else(() => ImmediateFallbackValue),
                 1
             );
         yield return () =>
             (
                 "Else deferred failures-aware success",
                 FailOr.Success(1),
-                source => Task.FromResult(source.Else(_ => 90)),
-                sourceTask => sourceTask.Else(_ => 90),
+                source => Task.FromResult(source.Else(_ => ImmediateFallbackValue)),
+                sourceTask => sourceTask.Else(_ => ImmediateFallbackValue),
                 1
             );
         yield return () =>
             (
                 "ElseAsync deferred success",
                 FailOr.Success(1),
-                source => source.ElseAsync(() => Task.FromResult(90)),
-                sourceTask => sourceTask.ElseAsync(() => Task.FromResult(90)),
+                source => source.ElseAsync(() => Task.FromResult(ImmediateFallbackValue)),
+                sourceTask => sourceTask.ElseAsync(() => Task.FromResult(ImmediateFallbackValue)),
                 1
             );
         yield return () =>
             (
                 "ElseAsync deferred failures-aware success",
                 FailOr.Success(1),
-                source => source.ElseAsync(_ => Task.FromResult(90)),
-                sourceTask => sourceTask.ElseAsync(_ => Task.FromResult(90)),
+                source => source.ElseAsync(_ => Task.FromResult(ImmediateFallbackValue)),
+                sourceTask => sourceTask.ElseAsync(_ => Task.FromResult(ImmediateFallbackValue)),
                 1
             );
         yield return () =>
             (
                 "Else value failure",
                 FailOr.Fail<int>(Failure.General("failed")),
-                source => Task.FromResult(source.Else(90)),
-                sourceTask => sourceTask.Else(90),
-                90
+                source => Task.FromResult(source.Else(ImmediateFallbackValue)),
+                sourceTask => sourceTask.Else(ImmediateFallbackValue),
+                ImmediateFallbackValue
             );
         yield return () =>
             (
                 "Else deferred failure",
                 FailOr.Fail<int>(Failure.General("failed")),
-                source => Task.FromResult(source.Else(() => 90)),
-                sourceTask => sourceTask.Else(() => 90),
-                90
+                source => Task.FromResult(source.Else(() => ImmediateFallbackValue)),
+                sourceTask => sourceTask.Else(() => ImmediateFallbackValue),
+                ImmediateFallbackValue
             );
         yield return () =>
             (
                 "Else deferred failures-aware failure",
                 FailOr.Fail<int>(Failure.General("failed")),
-                source => Task.FromResult(source.Else(_ => 90)),
-                sourceTask => sourceTask.Else(_ => 90),
-                90
+                source => Task.FromResult(source.Else(_ => ImmediateFallbackValue)),
+                sourceTask => sourceTask.Else(_ => ImmediateFallbackValue),
+                ImmediateFallbackValue
             );
         yield return () =>
             (
                 "ElseAsync deferred failure",
                 FailOr.Fail<int>(Failure.General("failed")),
-                source => source.ElseAsync(() => Task.FromResult(90)),
-                sourceTask => sourceTask.ElseAsync(() => Task.FromResult(90)),
-                90
+                source => source.ElseAsync(() => Task.FromResult(ImmediateFallbackValue)),
+                sourceTask => sourceTask.ElseAsync(() => Task.FromResult(ImmediateFallbackValue)),
+                ImmediateFallbackValue
             );
         yield return () =>
             (
                 "ElseAsync deferred failures-aware failure",
                 FailOr.Fail<int>(Failure.General("failed")),
-                source => source.ElseAsync(_ => Task.FromResult(90)),
-                sourceTask => sourceTask.ElseAsync(_ => Task.FromResult(90)),
-                90
+                source => source.ElseAsync(_ => Task.FromResult(ImmediateFallbackValue)),
+                sourceTask => sourceTask.ElseAsync(_ => Task.FromResult(ImmediateFallbackValue)),
+                ImmediateFallbackValue
             );
     }
 }
