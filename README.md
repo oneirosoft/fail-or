@@ -1,5 +1,11 @@
 # FailOr
 
+[![NuGet Version](https://img.shields.io/nuget/v/FailOr?logo=nuget&label=NuGet)](https://www.nuget.org/packages/FailOr/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/FailOr?logo=nuget&label=Downloads)](https://www.nuget.org/packages/FailOr/)
+[![CI](https://img.shields.io/github/actions/workflow/status/oneirosoft/fail-or/ci.yml?branch=main&label=CI)](https://github.com/oneirosoft/fail-or/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/oneirosoft/fail-or?label=License)](https://github.com/oneirosoft/fail-or/blob/main/LICENSE)
+[![Targets](https://img.shields.io/badge/Targets-net8.0%20%7C%20net10.0-512bd4?logo=dotnet)](https://github.com/oneirosoft/fail-or)
+
 `FailOr` is a small .NET result-type library for representing success or one-or-more failures without relying on exceptions for normal control flow.
 
 It centers on three public entry points:
@@ -19,7 +25,7 @@ The library also includes convenience APIs for common result workflows:
 
 ## Target framework
 
-`FailOr` currently targets `net10.0`.
+`FailOr` currently targets `net8.0` and `net10.0`.
 
 ## Installation
 
@@ -28,6 +34,10 @@ Install from NuGet:
 ```bash
 dotnet add package FailOr
 ```
+
+Package page:
+
+- [NuGet package](https://www.nuget.org/packages/FailOr/)
 
 ## Core concepts
 

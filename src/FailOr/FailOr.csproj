@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
+    <LangVersion>14.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -9,6 +10,7 @@
     <Description>Lightweight result type for explicit success and failure flows with combinators for mapping, matching, chaining, and aggregation.</Description>
     <PackageTags>result;railway-oriented-programming;functional;errors;validation;failor</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>oneiro_icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/oneirosoft/fail-or</RepositoryUrl>
@@ -17,6 +19,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None
+      Include="../../oneiro_icon.png"
+      Pack="true"
+      PackagePath="\"
+      Link="oneiro_icon.png"
+      Visible="false"
+    />
     <None Include="../../README.md" Pack="true" PackagePath="\" Link="README.md" Visible="false" />
   </ItemGroup>
 </Project>
