@@ -1,360 +1,98 @@
 # FailOr
 
-[![NuGet Version](https://img.shields.io/nuget/v/FailOr?logo=nuget&label=NuGet)](https://www.nuget.org/packages/FailOr/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/FailOr?logo=nuget&label=Downloads)](https://www.nuget.org/packages/FailOr/)
 [![CI](https://img.shields.io/github/actions/workflow/status/oneirosoft/fail-or/ci.yml?branch=main&label=CI)](https://github.com/oneirosoft/fail-or/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/oneirosoft/fail-or?label=License)](https://github.com/oneirosoft/fail-or/blob/main/LICENSE)
 [![Targets](https://img.shields.io/badge/Targets-net8.0%20%7C%20net10.0-512bd4?logo=dotnet)](https://github.com/oneirosoft/fail-or)
 
-`FailOr` is a small .NET result-type library for representing success or one-or-more failures without relying on exceptions for normal control flow.
+`FailOr` is a small .NET result-type toolkit for explicit success and failure flows. The repository contains a core package for result composition and a companion package for typed property-based validation.
 
-It centers on three public entry points:
+## Philosophy
 
-- `FailOr<T>` for a successful value or a collection of failures
-- `Failures` for the abstract failure union carried by failed results
-- `Failure` for factory methods that create `Failures.General`, `Failures.Validation`, and `Failures.Exceptional`
+- Use explicit results for expected failure paths instead of exceptions for normal control flow.
+- Keep success and failure handling composable through small, focused APIs.
+- Preserve rich failure information so validation, general, and exceptional failures can flow through the same pipelines.
+- Add validation behavior as an opt-in companion package instead of forcing it into the core result type.
 
-The library also includes convenience APIs for common result workflows:
+## Packages
 
-- `FailOr.Success(...)` and `FailOr.Fail(...)` for construction
-- `Then(...)`, `ThenAsync(...)`, `ThenEnsure(...)`, `ThenEnsureAsync(...)`, `FailWhen(...)`, `FailWhenAsync(...)`, `ThenDo(...)`, `ThenDoAsync(...)`, `IfSuccess(...)`, and `IfSuccessAsync(...)` for chaining, success validation, success-side effects, and terminal success observation
-- `IfFail(...)` and `IfFailAsync(...)` for observing failures without recovering
-- `Match(...)` and `MatchFirst(...)` for branching
-- `Zip(...)` for aggregating multiple results
-- `Combine(...)` for choosing a preferred success with fallback
+### `FailOr`
 
-## Target framework
+[![FailOr NuGet Version](https://img.shields.io/nuget/v/FailOr?logo=nuget&label=NuGet)](https://www.nuget.org/packages/FailOr/)
+[![FailOr NuGet Downloads](https://img.shields.io/nuget/dt/FailOr?logo=nuget&label=Downloads)](https://www.nuget.org/packages/FailOr/)
 
-`FailOr` currently targets `net8.0` and `net10.0`.
+The core package for `FailOr<T>`, `Failures`, `Failure`, and the chaining, matching, and aggregation APIs.
 
-## Installation
+- Package readme: [src/FailOr/README.md](src/FailOr/README.md)
+- API reference: [docs/api-reference.md](docs/api-reference.md)
 
-Install from NuGet:
+### `FailOr.Validations`
+
+[![FailOr.Validations NuGet Version](https://img.shields.io/nuget/v/FailOr.Validations?logo=nuget&label=NuGet)](https://www.nuget.org/packages/FailOr.Validations/)
+[![FailOr.Validations NuGet Downloads](https://img.shields.io/nuget/dt/FailOr.Validations?logo=nuget&label=Downloads)](https://www.nuget.org/packages/FailOr.Validations/)
+
+The companion package for property-selector based validation and validation-plus-transform pipelines built on top of `FailOr`.
+
+- Package readme: [src/FailOr.Validations/README.md](src/FailOr.Validations/README.md)
+- API reference: [docs/validations-api-reference.md](docs/validations-api-reference.md)
+
+## Solution Quick Start
+
+Install the core package when you want explicit success-or-failure results:
 
 ```bash
 dotnet add package FailOr
 ```
 
-Package page:
+Install the validations companion package when you want selector-based validation helpers. It brings `FailOr` as a dependency.
 
-- [NuGet package](https://www.nuget.org/packages/FailOr/)
+```bash
+dotnet add package FailOr.Validations
+```
 
-## Core concepts
-
-`FailOr<T>` is either:
-
-- a success value of type `T`
-- a failure result containing one or more `Failures` values
-
-`Failures` always exposes:
-
-- `Code`
-- `Details`
-
-Concrete failure values are created through the `Failure` factory surface:
-
-- `Failure.General(...)` for general-purpose failures with optional metadata
-- `Failure.Validation(...)` for property-scoped validation failures with one-or-more messages
-- `Failure.Exceptional(...)` for failures that wrap exceptions
-
-Use `IsSuccess`, `IsFailure`, `UnsafeUnwrap()`, and `Failures` to inspect a result directly when needed.
-
-## Quick start
-
-### Create success and failure results
+Create success and failure results with the core package:
 
 ```csharp
 using FailOr;
 
 var success = FailOr.Success(42);
 var failure = FailOr.Fail<int>(Failure.General("Input was invalid."));
-FailOr<int> implicitSuccess = 42;
-FailOr<int> implicitSingleFailure = Failure.General("Input was invalid.");
-Failures[] implicitFailures =
-[
-    Failure.General("Primary problem"),
-    Failure.General("Secondary problem")
-];
-FailOr<int> implicitFailureArray = implicitFailures;
-FailOr<int> implicitFailureList = new List<Failures>
+
+var message = success.Match(
+    value => $"Value: {value}",
+    failures => failures[0].Details);
+```
+
+Validate selected properties with the companion package:
+
+```csharp
+using FailOr;
+using FailOr.Validation;
+
+var person = new Person
 {
-    Failure.General("First list problem"),
-    Failure.General("Second list problem")
+    Name = "Ada",
+    Address = new Address { City = "Boston" }
 };
 
-if (success.IsSuccess)
-{
-    Console.WriteLine(success.UnsafeUnwrap());
-}
-
-if (failure.IsFailure)
-{
-    Console.WriteLine(failure.Failures[0].Details);
-}
+var result = person.Validate(
+    (x => x.Name, name => string.IsNullOrWhiteSpace(name)
+        ? FailOr.Fail<int>(Failure.Validation("Ignored", "Name is required."))
+        : FailOr.Success(1)),
+    (x => x.Address.City, city => string.IsNullOrWhiteSpace(city)
+        ? FailOr.Fail<int>(Failure.Validation("Ignored", "City is required."))
+        : FailOr.Success(1)));
 ```
 
-The implicit conversions delegate to the same `Success(...)` and `Fail(...)` validation paths, so null reference successes and invalid failure collections still throw the same exceptions as the factory methods.
+`Failures.Validation` values returned by validators are normalized to the selected leaf property name such as `Name` or `City`, while `Failures.General` and `Failures.Exceptional` are preserved unchanged.
 
-### Create specific failure cases
+## Documentation
 
-```csharp
-using FailOr;
+- Core package readme: [src/FailOr/README.md](src/FailOr/README.md)
+- Validations package readme: [src/FailOr.Validations/README.md](src/FailOr.Validations/README.md)
+- Core API reference: [docs/api-reference.md](docs/api-reference.md)
+- Validations API reference: [docs/validations-api-reference.md](docs/validations-api-reference.md)
 
-var general = Failure.General(
-    "Request timed out.",
-    code: "Http.Timeout",
-    metadata: new Dictionary<string, object?> { ["attempt"] = 3 });
-
-var validation = Failure.Validation(
-    "Email",
-    "Email is required.",
-    "Email must contain '@'.");
-
-var exceptional = Failure.Exceptional(new InvalidOperationException("Operation failed."));
-```
-
-### Chain success values with `Then`
-
-Use `Then` when the next step should only run after success.
-
-```csharp
-using FailOr;
-
-var result = FailOr.Success(10)
-    .Then(value => value + 5)
-    .Then(value => FailOr.Success(value * 2));
-
-var finalValue = result.UnsafeUnwrap(); // 30
-```
-
-Async variants are also available:
-
-```csharp
-using FailOr;
-
-var result = await FailOr.Success(10)
-    .ThenAsync(async value =>
-    {
-        await Task.Delay(10);
-        return value + 5;
-    });
-```
-
-### Map safely with `Try`
-
-Use `Try` when the next step should only run after success, but thrown exceptions should become failures instead of escaping the pipeline.
-
-```csharp
-using FailOr;
-
-var result = FailOr.Success("42")
-    .Try(value => int.Parse(value));
-
-if (result.IsFailure)
-{
-    var failure = (Failures.Exceptional)result.Failures[0];
-    Console.WriteLine(failure.Exception.Message);
-}
-```
-
-You can also translate the exception into a custom repository-native result:
-
-```csharp
-using FailOr;
-
-var result = FailOr.Success("42x")
-    .Try(
-        value => int.Parse(value),
-        exception => Failure.General($"Mapping failed: {exception.Message}"));
-```
-
-### Validate success values with `ThenEnsure`
-
-Use `ThenEnsure` when the next step should validate the current success and keep that original value flowing when validation succeeds.
-
-```csharp
-using FailOr;
-
-var result = FailOr.Success(10)
-    .ThenEnsure(value =>
-        value >= 0
-            ? FailOr.Success(true)
-            : FailOr.Fail<bool>(Failure.General("Value must be non-negative.")))
-    .Then(value => value + 5);
-
-var finalValue = result.UnsafeUnwrap(); // 15
-```
-
-Async validation helpers are also available:
-
-```csharp
-using FailOr;
-
-var result = await FailOr.Success(10)
-    .ThenEnsureAsync(async value =>
-    {
-        await Task.Delay(10);
-        return value % 2 == 0
-            ? FailOr.Success(true)
-            : FailOr.Fail<bool>(Failure.General("Value must be even."));
-    });
-```
-
-### Fail a success when a predicate matches with `FailWhen`
-
-Use `FailWhen` when the validation rule is naturally expressed as "this success should fail when this condition is true." Use `ThenEnsure` when the validation step is better modeled as another `FailOr`-producing operation.
-
-```csharp
-using FailOr;
-
-var result = FailOr.Success(3)
-    .FailWhen(value => value % 2 != 0, Failure.General("Value must be even."));
-```
-
-Async predicate-based validation is available for direct and task-wrapped results:
-
-```csharp
-using FailOr;
-
-var result = await Task.FromResult(FailOr.Success(10))
-    .FailWhenAsync(
-        async value =>
-        {
-            await Task.Delay(10);
-            return value < 0;
-        },
-        Failure.General("Value must be non-negative."));
-```
-
-### Run success-side effects with `ThenDo`
-
-Use `ThenDo` when you want to observe a success without changing the flowing result.
-
-```csharp
-using FailOr;
-
-var result = FailOr.Success(10)
-    .ThenDo(value => Console.WriteLine($"Observed: {value}"))
-    .Then(value => value + 5);
-
-var finalValue = result.UnsafeUnwrap(); // 15
-```
-
-The same side-effect helpers are available for task-wrapped results:
-
-```csharp
-using FailOr;
-
-var result = await Task.FromResult(FailOr.Success(10))
-    .ThenDoAsync(async value =>
-    {
-        await Task.Delay(10);
-        Console.WriteLine($"Observed: {value}");
-    })
-    .Then(value => value + 5);
-```
-
-### Observe terminal success with `IfSuccess`
-
-Use `IfSuccess` when you want to observe a success as a terminal side effect and do not need to keep chaining the `FailOr<T>` value. Use `ThenDo` when the same observation should preserve the result for continued chaining.
-
-```csharp
-using FailOr;
-
-FailOr.Success(10)
-    .IfSuccess(value => Console.WriteLine($"Observed terminal success: {value}"));
-
-await Task.FromResult(FailOr.Success(10))
-    .IfSuccessAsync(async value =>
-    {
-        await Task.Delay(10);
-        Console.WriteLine($"Observed terminal success: {value}");
-    });
-```
-
-### Run failure-side effects with `IfFail`
-
-Use `IfFail` when you want to observe a failure without replacing it, recovering from it, or otherwise changing control flow.
-
-```csharp
-using FailOr;
-
-var result = FailOr.Fail<int>(Failure.General("Primary lookup failed."));
-
-result.IfFail(failures => Console.WriteLine($"Observed: {failures[0].Details}"));
-```
-
-Async variants are available for both direct and task-wrapped results:
-
-```csharp
-using FailOr;
-
-await Task.FromResult(FailOr.Fail<int>(Failure.General("Primary lookup failed.")))
-    .IfFailAsync(async failures =>
-    {
-        await Task.Delay(10);
-        Console.WriteLine($"Observed {failures.Count} failure(s).");
-    });
-```
-
-### Branch with `Match`
-
-Use `Match` when you want a single expression that handles both outcomes.
-
-```csharp
-using FailOr;
-
-var message = FailOr.Fail<int>(Failure.General("The value could not be produced."))
-    .Match(
-        success: value => $"Value: {value}",
-        failure: failures => failures[0].Details);
-```
-
-Use `MatchFirst` when only the first failure matters:
-
-```csharp
-using FailOr;
-
-var message = FailOr.Fail<int>(
-        Failure.General("Primary problem"),
-        Failure.General("Secondary problem"))
-    .MatchFirst(
-        success: value => $"Value: {value}",
-        failure: firstFailure => firstFailure.Details);
-```
-
-### Aggregate with `Zip`
-
-`Zip` combines successful results into tuples and preserves failures in left-to-right order.
-
-```csharp
-using FailOr;
-
-var zipped = FailOr.Zip(
-    FailOr.Success(1),
-    FailOr.Success("two"),
-    FailOr.Success(true));
-
-var (number, text, flag) = zipped.UnsafeUnwrap();
-```
-
-If any input fails, the returned result is failed and contains every `Failures` value from the failed inputs, including mixed failure cases such as validation and exceptional failures.
-
-### Prefer one result with `Combine`
-
-`Combine` returns the left result when it succeeds; otherwise it returns the right result.
-
-```csharp
-using FailOr;
-
-var preferred = FailOr.Combine(
-    FailOr.Fail<int>(Failure.General("Primary source unavailable")),
-    FailOr.Success(99));
-
-Console.WriteLine(preferred.UnsafeUnwrap()); // 99
-```
-
-## Local development
+## Local Development
 
 Restore local tools, packages, build, and test from the repository root:
 
@@ -377,65 +115,14 @@ Verify formatting without rewriting files:
 dotnet csharpier check .
 ```
 
-Create a local package with an explicit version:
+Create local packages with an explicit version:
 
 ```bash
-dotnet pack src/FailOr/FailOr.csproj -c Release -p:Version=1.2.3
+dotnet pack src/FailOr/FailOr.csproj -c Release -p:Version=1.2.3 --output artifacts/packages
+dotnet pack src/FailOr.Validations/FailOr.Validations.csproj -c Release -p:Version=1.2.3 --output artifacts/packages
 ```
 
-## GitHub Actions
-
-The repository includes two workflows:
-
-- `CI` runs on pushes to `main` and pull requests targeting `main`
-- `Release` runs when a GitHub Release is published
-
-The CI workflow restores, builds, and tests the solution so it can be used as a required branch-protection check.
-
-The release workflow:
-
-1. reads the GitHub Release tag
-2. requires the tag to match `v<NuGetSemVer>`
-3. strips the leading `v`
-4. runs restore, build, test, and pack
-5. publishes the resulting package to nuget.org only after all checks pass
-
-Examples of accepted release tags:
-
-- `v1.2.3`
-- `v1.2.3-beta.1`
-
-Examples of rejected release tags:
-
-- `1.2.3`
-- `release-1.2.3`
-
-## NuGet trusted publishing setup
-
-Before the release workflow can publish to nuget.org, complete this setup:
-
-1. Create the GitHub repository.
-2. Verify project metadata and repository links point to `oneirosoft/fail-or`.
-3. In nuget.org, configure a trusted publishing policy for this repository and the workflow file `release.yml`.
-4. Add a GitHub repository variable named `NUGET_ORG_USERNAME` with the nuget.org account or profile name that owns the package.
-5. Optionally configure a GitHub Actions environment if you want additional release approvals or environment-scoped controls.
-
-The workflow requests an OIDC token and exchanges it for a short-lived NuGet API key during the release job. No long-lived NuGet API key is stored in GitHub.
-
-## Releasing
-
-The release process is:
-
-1. Ensure `main` is green.
-2. Create and push a tag in the form `v<NuGetSemVer>`.
-3. Publish a GitHub Release for that tag.
-4. Let the `Release` workflow build, test, pack, and publish the package.
-
-The GitHub Release tag is the package version source of truth. The project file intentionally does not hardcode a package version.
-
-## Repository metadata
-
-Repository metadata:
+## Repository Metadata
 
 - GitHub repository: `https://github.com/oneirosoft/fail-or`
 - Issue tracker: `https://github.com/oneirosoft/fail-or/issues`
@@ -443,4 +130,4 @@ Repository metadata:
 
 ## License
 
-This project is licensed under the MIT License. See the repository `LICENSE` file for the full text.
+This project is licensed under the MIT License. See the repository [LICENSE](LICENSE) file for the full text.

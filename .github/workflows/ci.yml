@@ -35,3 +35,9 @@ jobs:
 
       - name: Test
         run: dotnet test --solution fail-or.slnx --configuration Release --no-build
+
+      - name: Pack FailOr
+        run: dotnet pack src/FailOr/FailOr.csproj --configuration Release --no-build -p:Version=0.0.0-ci.${{ github.run_number }} --output artifacts/packages
+
+      - name: Pack FailOr.Validations
+        run: dotnet pack src/FailOr.Validations/FailOr.Validations.csproj --configuration Release --no-build -p:Version=0.0.0-ci.${{ github.run_number }} --output artifacts/packages

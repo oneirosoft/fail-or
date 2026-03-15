@@ -50,13 +50,16 @@ jobs:
       - name: Test
         run: dotnet test --solution fail-or.slnx --configuration Release --no-build
 
-      - name: Pack
+      - name: Pack FailOr
         run: dotnet pack src/FailOr/FailOr.csproj --configuration Release --no-build -p:Version=${{ steps.version.outputs.version }} --output artifacts/packages
 
-      - name: Upload package artifact
+      - name: Pack FailOr.Validations
+        run: dotnet pack src/FailOr.Validations/FailOr.Validations.csproj --configuration Release --no-build -p:Version=${{ steps.version.outputs.version }} --output artifacts/packages
+
+      - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nuget-package
+          name: nuget-packages
           path: artifacts/packages/*.nupkg
 
       - name: Authenticate to nuget.org with trusted publishing

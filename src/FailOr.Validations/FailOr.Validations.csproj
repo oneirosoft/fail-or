@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
     <LangVersion>14.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>FailOr</PackageId>
+    <PackageId>FailOr.Validations</PackageId>
     <Authors>Oneirosoft Contributors</Authors>
-    <Description>Lightweight result type for explicit success and failure flows with combinators for mapping, matching, chaining, and aggregation.</Description>
-    <PackageTags>result;railway-oriented-programming;functional;errors;validation;failor</PackageTags>
+    <Description>Typed property-based validation helpers for FailOr with selector normalization and transform pipelines.</Description>
+    <PackageTags>result;validation;validators;problem-details;failor</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>oneiro_icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -17,6 +17,10 @@
     <PackageProjectUrl>https://github.com/oneirosoft/fail-or</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FailOr/FailOr.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="../../LICENSE" Pack="true" PackagePath="\" Link="LICENSE" Visible="false" />

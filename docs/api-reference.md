@@ -5,7 +5,11 @@
 - a successful value of type `T`
 - one or more failures
 
-This document is written for consumers of the package. It focuses on what each API is for, when to use it, and the public signatures you will call most often.
+This document is written for consumers of the core `FailOr` package. It focuses on what each API is for, when to use it, and the public signatures you will call most often.
+
+Start with the solution overview in [README.md](../README.md) and the package-specific guide in [src/FailOr/README.md](../src/FailOr/README.md).
+
+For the companion validation package, see [docs/validations-api-reference.md](./validations-api-reference.md) and [src/FailOr.Validations/README.md](../src/FailOr.Validations/README.md).
 
 ## Core Types
 
